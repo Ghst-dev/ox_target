@@ -11,5 +11,14 @@
   "debug_ped": "(Debug) Ped",
   "debug_vehicle": "(Debug) Fahrzeug",
   "debug_object": "(Debug) Objekt",
-  "toggle_targeting": "Zielen umschalten"
+  "toggle_targeting": "Zielen umschalten",
+  "go_back": "Zurück",
+  "ui_requires": "Benötigt",
+  "ui_restricted_to": "Beschränkt auf",
+  "ui_too_far": "Zu weit weg",
+  "ui_group_general": "Allgemein",
+  "ui_group_type": "Dieser Typ",
+  "ui_group_model": "Dieses Modell",
+  "ui_group_entity": "Dieses Objekt",
+  "ui_group_zone": "Zone"
 }

@@ -13,5 +13,13 @@
   "debug_object": "(Debug) Objekt",
   "debug_global": "(Debug) Global",
   "toggle_targeting": "Växla Target",
-  "go_back": "Gå tillbaka"
+  "go_back": "Gå tillbaka",
+  "ui_requires": "Kräver",
+  "ui_restricted_to": "Endast för",
+  "ui_too_far": "För långt bort",
+  "ui_group_general": "Allmänt",
+  "ui_group_type": "Denna typ",
+  "ui_group_model": "Denna modell",
+  "ui_group_entity": "Detta objekt",
+  "ui_group_zone": "Zon"
 }

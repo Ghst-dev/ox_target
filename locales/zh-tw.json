@@ -13,5 +13,13 @@
   "debug_object": "(Debug) 物體",
   "debug_global": "(Debug) 全局對象",
   "toggle_targeting": "交互菜單",
-  "go_back": "返回"
+  "go_back": "返回",
+  "ui_requires": "需要",
+  "ui_restricted_to": "僅限",
+  "ui_too_far": "距離太遠",
+  "ui_group_general": "通用",
+  "ui_group_type": "此類型",
+  "ui_group_model": "此型號",
+  "ui_group_entity": "此實體",
+  "ui_group_zone": "區域"
 }

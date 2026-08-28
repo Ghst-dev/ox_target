@@ -13,5 +13,13 @@
   "debug_object": "(Debug) Nesne",
   "debug_global": "(Debug) Genel",
   "toggle_targeting": "Hedeflemeyi aç/kapa",
-  "go_back": "Geri dön"
+  "go_back": "Geri dön",
+  "ui_requires": "Gerekli",
+  "ui_restricted_to": "Şunlarla sınırlı",
+  "ui_too_far": "Çok uzak",
+  "ui_group_general": "Genel",
+  "ui_group_type": "Bu tür",
+  "ui_group_model": "Bu model",
+  "ui_group_entity": "Bu nesne",
+  "ui_group_zone": "Bölge"
 }

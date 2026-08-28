@@ -11,5 +11,14 @@
   "debug_ped": "(Debug) Ped",
   "debug_vehicle": "(Debug) Ajoneuvo",
   "debug_object": "(Debug) Objekti",
-  "toggle_targeting": "Päällä/Pois tähtäys"
+  "toggle_targeting": "Päällä/Pois tähtäys",
+  "go_back": "Takaisin",
+  "ui_requires": "Vaatii",
+  "ui_restricted_to": "Rajoitettu",
+  "ui_too_far": "Liian kaukana",
+  "ui_group_general": "Yleinen",
+  "ui_group_type": "Tämä tyyppi",
+  "ui_group_model": "Tämä malli",
+  "ui_group_entity": "Tämä kohde",
+  "ui_group_zone": "Alue"
 }

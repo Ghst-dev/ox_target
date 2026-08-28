@@ -11,5 +11,14 @@
   "debug_ped": "(Debug) Ped",
   "debug_vehicle": "(Debug) Kendaraan",
   "debug_object": "(Debug) Objek",
-  "toggle_targeting": "Tombol penargetan"
+  "toggle_targeting": "Tombol penargetan",
+  "go_back": "Kembali",
+  "ui_requires": "Memerlukan",
+  "ui_restricted_to": "Terbatas untuk",
+  "ui_too_far": "Terlalu jauh",
+  "ui_group_general": "Umum",
+  "ui_group_type": "Tipe ini",
+  "ui_group_model": "Model ini",
+  "ui_group_entity": "Objek ini",
+  "ui_group_zone": "Zona"
 }

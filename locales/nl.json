@@ -11,5 +11,14 @@
   "debug_ped": "(Debug) Ped",
   "debug_vehicle": "(Debug) Voertuig",
   "debug_object": "(Debug) Object",
-  "toggle_targeting": "Toggle richten"
+  "toggle_targeting": "Toggle richten",
+  "go_back": "Terug",
+  "ui_requires": "Vereist",
+  "ui_restricted_to": "Beperkt tot",
+  "ui_too_far": "Te ver weg",
+  "ui_group_general": "Algemeen",
+  "ui_group_type": "Dit type",
+  "ui_group_model": "Dit model",
+  "ui_group_entity": "Dit object",
+  "ui_group_zone": "Zone"
 }

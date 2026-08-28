@@ -1,0 +1,36 @@
+/*
+ * Stylesheet entry, imported once from main.ts.
+ *
+ * theme/tokens.css and theme/base.css are copies of ox_lib's, not a shared package —
+ * cross-resource theme sharing was ruled out deliberately. A palette change happens in
+ * every copy.
+ */
+
+@import 'tailwindcss';
+@import './theme/tokens.css';
+@import './theme/base.css';
+
+@source './';
+
+/*
+ * CAUTION — component class names share a namespace with Tailwind's utilities. @source
+ * scans these files, so class="ring" or class="container" makes Tailwind generate its own
+ * utility of that name, which then applies alongside the component's scoped styles.
+ * Svelte's scoping does not prevent it. Both bit us in ox_lib. Avoid: ring, container,
+ * grow, group, block, flex, fixed, absolute, hidden, static, table, contents.
+ */
+
+#root {
+  position: fixed;
+  inset: 0;
+  /* The reticle must never eat a click meant for the game; the option panel opts back in. */
+  pointer-events: none;
+}
+
+/* Dev-only backdrop so the transparent overlay is visible during `pnpm dev`. */
+.nui-browser body {
+  background:
+    radial-gradient(ellipse 50% 40% at 25% 20%, #3a5a7a 0%, transparent 60%),
+    radial-gradient(ellipse 45% 45% at 75% 70%, #6b4a2a 0%, transparent 62%),
+    linear-gradient(160deg, #1a2130 0%, #0f1218 55%, #14100c 100%);
+}

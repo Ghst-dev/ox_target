@@ -1,0 +1,8 @@
+# The UI gained a build step on this branch; neither of these belongs in the repo.
+# Tools/sync.sh produces web/build, and ui_page points at it.
+web/node_modules/
+web/build/
+web/.vite/
+
+*.tsbuildinfo
+npm-debug.log*

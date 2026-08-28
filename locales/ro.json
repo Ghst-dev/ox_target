@@ -13,5 +13,13 @@
   "debug_object": "(Debug) Obiect",
   "debug_global": "(Debug) Global",
   "toggle_targeting": "Foloseste ochiul",
-  "go_back": "Întoarce-te"
+  "go_back": "Întoarce-te",
+  "ui_requires": "Necesită",
+  "ui_restricted_to": "Restricționat la",
+  "ui_too_far": "Prea departe",
+  "ui_group_general": "General",
+  "ui_group_type": "Acest tip",
+  "ui_group_model": "Acest model",
+  "ui_group_entity": "Acest obiect",
+  "ui_group_zone": "Zonă"
 }

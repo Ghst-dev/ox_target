@@ -1,0 +1,97 @@
+/*
+ * Overlay rules.
+ *
+ * Tailwind's preflight covers the ordinary reset. What is left is the handful of
+ * things that are true because this page is an overlay inside the game's Chromium
+ * instance rather than a web page, plus the interaction conventions carried over
+ * from the Ghostbase base layer (focus ring, selection).
+ */
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+
+    /* The single most important rule in the theme. A background here covers the
+       game with a rectangle the player cannot dismiss, and because it is only
+       visible while the UI holds focus it survives casual testing. Tint panels,
+       not the page. This is also why the site's --bg (#0a0a0a) is a panel color
+       here and never a page color. */
+    background: transparent;
+
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-body);
+
+    /* CEF renders over a dark, busy scene; without this, light text on
+       translucent panels picks up visible color fringing from subpixel
+       antialiasing. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    user-select: none;
+    cursor: default;
+  }
+
+  /* Text entry is the one place the global user-select:none has to be lifted, or
+     the player cannot select what they just typed. */
+  input,
+  textarea,
+  [contenteditable='true'] {
+    user-select: text;
+  }
+
+  /* Same ring as the site. Keyboard focus only: a mouse click on a button in-game
+     should not leave a ring sitting there, but tab navigation has to stay
+     visible. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background: var(--color-primary);
+    color: var(--color-bg);
+  }
+
+  ::placeholder {
+    color: var(--color-dim);
+  }
+
+  /* CEF is Chromium, so these pseudo-elements are reliable here in a way they are
+     not on the open web. */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-surface-2);
+    border: 2px solid transparent;
+    background-clip: content-box;
+    border-radius: var(--radius-full);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border);
+    background-clip: content-box;
+  }
+
+  /* Motion sickness is a real accessibility concern in a first-person game, and
+     the OS preference reaches CEF. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

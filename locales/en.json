@@ -13,5 +13,13 @@
   "debug_object": "(Debug) Object",
   "debug_global": "(Debug) Global",
   "toggle_targeting": "Toggle targeting",
-  "go_back": "Go back"
+  "go_back": "Go back",
+  "ui_requires": "Requires",
+  "ui_restricted_to": "Restricted to",
+  "ui_too_far": "Too far",
+  "ui_group_general": "General",
+  "ui_group_type": "This type",
+  "ui_group_model": "This model",
+  "ui_group_entity": "This entity",
+  "ui_group_zone": "Zone"
 }

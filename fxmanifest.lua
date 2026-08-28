@@ -13,7 +13,9 @@ repository 'https://github.com/overextended/ox_target'
 description ''
 
 -- Manifest
-ui_page 'web/index.html'
+-- The UI is a Svelte app now, so this points at the build output rather than a
+-- hand-written page. `files` already globs web/**, which covers web/build.
+ui_page 'web/build/index.html'
 
 shared_scripts {
     '@ox_lib/init.lua',
@@ -35,6 +37,7 @@ files {
     'client/state.lua',
     'client/debug.lua',
     'client/defaults.lua',
+    'client/ambient.lua',
     'client/framework/nd.lua',
     'client/framework/ox.lua',
     'client/framework/esx.lua',

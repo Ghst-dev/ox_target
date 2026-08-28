@@ -13,5 +13,13 @@
   "debug_object": "(Debug) Objekt",
   "debug_global": "(Debug) Global",
   "toggle_targeting": "Skift målretning",
-  "go_back": "Gå tilbage"
+  "go_back": "Gå tilbage",
+  "ui_requires": "Kræver",
+  "ui_restricted_to": "Forbeholdt",
+  "ui_too_far": "For langt væk",
+  "ui_group_general": "Generelt",
+  "ui_group_type": "Denne type",
+  "ui_group_model": "Denne model",
+  "ui_group_entity": "Dette objekt",
+  "ui_group_zone": "Zone"
 }

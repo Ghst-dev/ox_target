@@ -11,5 +11,14 @@
   "debug_ped": "(Debug) Ped",
   "debug_vehicle": "(Debug) Auto",
   "debug_object": "(Debug) Objekt",
-  "toggle_targeting": "Upali/Ugasi Target sistem"
+  "toggle_targeting": "Upali/Ugasi Target sistem",
+  "go_back": "Natrag",
+  "ui_requires": "Zahtijeva",
+  "ui_restricted_to": "Ograničeno na",
+  "ui_too_far": "Predaleko",
+  "ui_group_general": "Općenito",
+  "ui_group_type": "Ova vrsta",
+  "ui_group_model": "Ovaj model",
+  "ui_group_entity": "Ovaj objekt",
+  "ui_group_zone": "Zona"
 }

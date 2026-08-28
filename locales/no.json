@@ -6,5 +6,13 @@
   "toggle_hood": "Åpne/lukke panser",
   "toggle_trunk": "Åpne/lukke bagasjerom",
   "toggle_targeting": "Sikt",
-  "go_back": "Tilbake"
+  "go_back": "Tilbake",
+  "ui_requires": "Krever",
+  "ui_restricted_to": "Forbeholdt",
+  "ui_too_far": "For langt unna",
+  "ui_group_general": "Generelt",
+  "ui_group_type": "Denne typen",
+  "ui_group_model": "Denne modellen",
+  "ui_group_entity": "Dette objektet",
+  "ui_group_zone": "Sone"
 }

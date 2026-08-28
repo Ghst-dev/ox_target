@@ -12,5 +12,13 @@
   "debug_vehicle": "(Debug) Sõiduk",
   "debug_object": "(Debug) Objekt",
   "toggle_targeting": "Näita kolmandat silma",
-  "go_back": "Mine tagasi"
+  "go_back": "Mine tagasi",
+  "ui_requires": "Nõuab",
+  "ui_restricted_to": "Piiratud",
+  "ui_too_far": "Liiga kaugel",
+  "ui_group_general": "Üldine",
+  "ui_group_type": "See tüüp",
+  "ui_group_model": "See mudel",
+  "ui_group_entity": "See objekt",
+  "ui_group_zone": "Tsoon"
 }

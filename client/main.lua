@@ -9,6 +9,7 @@ local options = require 'client.api'.getTargetOptions()
 require 'client.debug'
 require 'client.defaults'
 require 'client.compat.qtarget'
+require 'client.ambient'
 
 local SendNuiMessage = SendNuiMessage
 local GetEntityCoords = GetEntityCoords
@@ -28,10 +29,54 @@ local menuChanged
 local menuHistory = {}
 local nearbyZones
 
+--- The flattened, visible order the PAGE is drawing, as { type, id, zoneId } triples.
+---
+--- Pushed up by the `order` callback rather than recomputed here. The page filters blocked
+--- rows, regroups the buckets broad-to-specific and lifts the back row into a breadcrumb, so
+--- Lua's own table order is not what the player is looking at. Two implementations of "which
+--- row is third" would disagree the first time either one changed.
+local keyOrder
+
+--- Forward declaration: the draw thread inside startTargeting closes over this, and the
+--- definition needs the menu history and focus handling that live further down.
+local selectOption
+
 -- Toggle ox_target, instead of holding the hotkey
 local toggleHotkey = GetConvarInt('ox_target:toggleHotkey', 0) == 1
 local mouseButton = GetConvarInt('ox_target:leftClick', 1) == 1 and 24 or 25
 local debug = GetConvarInt('ox_target:debug', 0) == 1
+
+-- Show options blocked by `groups` as greyed-out entries naming the requirement, rather
+-- than hiding them. Off by default: "Restricted to police" is useful signposting on a
+-- mechanic's ramp and a design leak on a police-only action, so the call belongs to the
+-- server. Item requirements are always shown -- those are a hint, not a secret.
+local showRestricted = GetConvarInt('ox_target:showRestricted', 0) == 1
+
+-- How long a `canInteract` result stays good for, in ms. The callback is arbitrary author
+-- code run under pcall for every visible option on a 50ms loop, so it is the one cost here
+-- unbounded by anything this resource controls. 200ms is under the threshold at which a
+-- list feels stale and cuts the call rate by roughly three quarters. Set 0 to run it every
+-- tick, which is what upstream does.
+local interactCacheMs = GetConvarInt('ox_target:interactCacheMs', 200)
+
+-- Hold the mouse button for this many ms to confirm an option instead of clicking it once.
+-- 0 keeps the click. Off by default because it changes how every interaction on the server
+-- feels, which is a decision rather than an improvement.
+local holdToConfirm = GetConvarInt('ox_target:holdToConfirm', 0)
+
+-- Number keys 1-9 select the Nth row of the list without reaching for the mouse. On by
+-- default: those keys do nothing at all while targeting today, so nothing is taken away.
+local numberKeys = GetConvarInt('ox_target:numberKeys', 1) == 1
+
+-- A tick when a target is acquired and when an option is taken. Off by default: audio is
+-- taste, and a server that wants none should not have to find the setting.
+local sounds = GetConvarInt('ox_target:sounds', 0) == 1
+
+--- Throttle store for canInteract, keyed by the option table itself.
+---
+--- Weak keys, because an option outlives this table only until the resource that registered
+--- it removes it -- and nothing here should be the reason a removed option is kept alive.
+local interactCache = setmetatable({}, { __mode = 'k' })
 local vec0 = vec3(0, 0, 0)
 
 ---@param option OxTargetOption
@@ -40,21 +85,26 @@ local vec0 = vec3(0, 0, 0)
 ---@param entityHit? number
 ---@param entityType? number
 ---@param entityModel? number | false
+---Returns whether the option should be hidden, and why.
+---The reason is forwarded to the NUI so it can explain a blocked action instead of
+---silently dropping it. Codes: 'menu' | 'distance' | 'groups' | 'items' | 'bone' |
+---'offset' | 'canInteract'.
+---@return boolean?, string?
 local function shouldHide(option, distance, endCoords, entityHit, entityType, entityModel)
     if option.menuName ~= currentMenu then
-        return true
+        return true, 'menu'
     end
 
     if distance > (option.distance or 7) then
-        return true
+        return true, 'distance'
     end
 
     if option.groups and not utils.hasPlayerGotGroup(option.groups) then
-        return true
+        return true, 'groups'
     end
 
     if option.items and not utils.hasPlayerGotItems(option.items, option.anyItem) then
-        return true
+        return true, 'items'
     end
 
     local bone = entityModel and option.bones or nil
@@ -72,7 +122,7 @@ local function shouldHide(option, distance, endCoords, entityHit, entityType, en
             if boneId ~= -1 and #(endCoords - GetEntityBonePosition_2(entityHit, boneId)) <= 2 then
                 bone = boneId
             else
-                return true
+                return true, 'bone'
             end
         elseif _type == 'table' then
             local closestBone, boneDistance
@@ -93,7 +143,7 @@ local function shouldHide(option, distance, endCoords, entityHit, entityType, en
             if closestBone then
                 bone = closestBone
             else
-                return true
+                return true, 'bone'
             end
         end
     end
@@ -105,7 +155,11 @@ local function shouldHide(option, distance, endCoords, entityHit, entityType, en
         ---@cast entityType number
         ---@cast entityModel number
 
-        if not option.absoluteOffset then
+        -- `offsetAbsolute` is the spelling upstream DOCUMENTS; `absoluteOffset` is the one
+        -- upstream READS, and has since the property existed. Following the documentation
+        -- therefore does nothing at all: the offset silently stays model-relative, lands
+        -- somewhere plausible, and reports no error. Both spellings are accepted here.
+        if not (option.absoluteOffset or option.offsetAbsolute) then
             local min, max = GetModelDimensions(entityModel)
             offset = (max - min) * offset + min
         end
@@ -113,13 +167,39 @@ local function shouldHide(option, distance, endCoords, entityHit, entityType, en
         offset = GetOffsetFromEntityInWorldCoords(entityHit, offset.x, offset.y, offset.z)
 
         if #(endCoords - offset) > (option.offsetSize or 1) then
-            return true
+            return true, 'offset'
         end
     end
 
     if option.canInteract then
-        local success, resp = pcall(option.canInteract, entityHit, distance, endCoords, option.name, bone)
-        return not success or not resp
+        --- Throttled rather than run every tick.
+        ---
+        --- This is arbitrary author code behind a `pcall`, re-run for every visible option on
+        --- every pass of a 50ms loop -- the one place in this resource where the cost is
+        --- unbounded by anything we control.
+        ---
+        --- It is a THROTTLE and not a cache, because the callback is handed `distance` and
+        --- `coords`: a result is only true for where the player was standing when it ran, so
+        --- keeping one indefinitely would be wrong. The entry is dropped the moment the
+        --- entity changes, and expires on its own after `interactCacheMs`.
+        ---
+        --- `option.distance` is still evaluated every tick, uncached, above -- so the gate
+        --- players actually feel does not go stale even when this one has.
+        local cached = interactCache[option]
+        local now = GetGameTimer()
+        local resp
+
+        if cached and cached.entity == entityHit and now - cached.at < interactCacheMs then
+            resp = cached.resp
+        else
+            local success, result = pcall(option.canInteract, entityHit, distance, endCoords, option.name, bone)
+            resp = success and result or false
+            interactCache[option] = { entity = entityHit, at = now, resp = resp }
+        end
+
+        if not resp then
+            return true, 'canInteract'
+        end
     end
 end
 
@@ -148,6 +228,30 @@ local function startTargeting()
 
             utils.drawZoneSprites(dict, texture)
             DisablePlayerFiring(cache.playerId, true)
+
+            --- Number keys pick the Nth row of the list.
+            ---
+            --- Handled in Lua rather than in the page, because the page cannot see a keypress
+            --- until NUI focus is taken and focus is only taken on a click -- so a keyboard
+            --- path built in the UI would still have had to start with the mouse, which is the
+            --- thing it exists to avoid.
+            ---
+            --- The controls are disabled only while a target is up, so weapon switching is
+            --- untouched the rest of the time. 157 is INPUT_SELECT_WEAPON_UNARMED -- the 1 key --
+            --- and 158-165 follow it in order up to 9.
+            if numberKeys and hasTarget and keyOrder then
+                for i = 1, math.min(#keyOrder, 9) do
+                    local control = 156 + i
+
+                    DisableControlAction(0, control, true)
+
+                    if IsDisabledControlJustPressed(0, control) then
+                        local entry = keyOrder[i]
+                        selectOption(entry[1], entry[2], entry[3])
+                        break
+                    end
+                end
+            end
             DisableControlAction(0, 25, true)
             DisableControlAction(0, 140, true)
             DisableControlAction(0, 141, true)
@@ -229,6 +333,7 @@ local function startTargeting()
         end
 
         if hasTarget and (zonesChanged or entityChanged and hasTarget > 1) then
+            keyOrder = nil
             SendNuiMessage('{"event": "leftTarget"}')
 
             if entityChanged then options:wipe() end
@@ -256,10 +361,14 @@ local function startTargeting()
 
             for i = 1, optionCount do
                 local option = v[i]
-                local hide = shouldHide(option, dist, endCoords, entityHit, entityType, entityModel)
+                local hide, reason = shouldHide(option, dist, endCoords, entityHit, entityType, entityModel)
 
-                if option.hide ~= hide then
+                -- hideReason travels to the NUI so a blocked action can say why instead of
+                -- vanishing. It is part of the dirty check too, or a change of reason alone
+                -- would never reach the UI.
+                if option.hide ~= hide or option.hideReason ~= reason then
                     option.hide = hide
+                    option.hideReason = reason
                     newOptions = true
                 end
 
@@ -277,10 +386,11 @@ local function startTargeting()
 
             for j = 1, optionCount do
                 local option = zoneOptions[j]
-                local hide = shouldHide(option, distance, endCoords, entityHit)
+                local hide, reason = shouldHide(option, distance, endCoords, entityHit)
 
-                if option.hide ~= hide then
+                if option.hide ~= hide or option.hideReason ~= reason then
                     option.hide = hide
+                    option.hideReason = reason
                     newOptions = true
                 end
 
@@ -296,6 +406,7 @@ local function startTargeting()
             if hasTarget and hidden == totalOptions then
                 if hasTarget and hasTarget ~= 1 then
                     hasTarget = false
+                    keyOrder = nil
                     SendNuiMessage('{"event": "leftTarget"}')
                 end
             elseif menuChanged or hasTarget ~= 1 and hidden ~= totalOptions then
@@ -310,6 +421,12 @@ local function startTargeting()
                             menuName = currentMenu,
                             openMenu = 'home'
                         })
+                end
+
+                --- A target has been acquired. The reticle already has this moment; the sound
+                --- hangs on the same edge so the two agree.
+                if sounds then
+                    PlaySoundFrontend(-1, 'HIGHLIGHT_NAV_UP_DOWN', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
                 end
 
                 SendNuiMessage(json.encode({
@@ -340,6 +457,7 @@ local function startTargeting()
     state.setNuiFocus(false)
     SendNuiMessage('{"event": "visible", "state": false}')
     table.wipe(currentTarget)
+    keyOrder = nil
     options:wipe()
 
     if nearbyZones then table.wipe(nearbyZones) end
@@ -402,13 +520,22 @@ local function getResponse(option, server)
     return response
 end
 
-RegisterNUICallback('select', function(data, cb)
-    cb(1)
-
-    local zone = data[3] and nearbyZones[data[3]]
+---Runs the option a player picked, whether they clicked it or pressed its number.
+---
+---Extracted from the `select` callback so the keyboard path is the same code rather than a
+---second copy that has to be kept in step with menu history, focus and the sound.
+---@param optionType string
+---@param id number
+---@param zoneId? number
+function selectOption(optionType, id, zoneId)
+    local zone = zoneId and nearbyZones and nearbyZones[zoneId]
 
     ---@type OxTargetOption?
-    local option = zone and zone.options[data[2]] or options[data[1]][data[2]]
+    local option = zone and zone.options[id] or optionType and options[optionType] and options[optionType][id]
+
+    if sounds and option then
+        PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+    end
 
     if option then
         if option.openMenu then
@@ -453,4 +580,42 @@ RegisterNUICallback('select', function(data, cb)
     if not option?.openMenu and IsNuiFocused() then
         state.setActive(false)
     end
+end
+
+RegisterNUICallback('select', function(data, cb)
+    cb(1)
+    selectOption(data[1], data[2], data[3])
+end)
+
+---The page reports the order it is actually drawing, so a number key can mean the row the
+---player is looking at rather than the row Lua happens to hold third.
+RegisterNUICallback('order', function(data, cb)
+    cb(1)
+    keyOrder = data
+end)
+
+---The UI asks for this once on mount, mirroring ox_lib's `init` handshake.
+---
+---ox_target ships locales/*.json but has never had a way to get them into the NUI --
+---upstream's page had no strings of its own. The rebuilt UI does (blocked reasons, group
+---headings), so they are pushed here rather than hardcoded in English.
+RegisterNUICallback('init', function(_, cb)
+    cb(1)
+
+    SendNuiMessage(json.encode({
+        event = 'init',
+        showRestricted = showRestricted,
+        holdToConfirm = holdToConfirm,
+        locale = {
+            go_back = locale('go_back'),
+            requires = locale('ui_requires'),
+            restricted_to = locale('ui_restricted_to'),
+            too_far = locale('ui_too_far'),
+            group_general = locale('ui_group_general'),
+            group_type = locale('ui_group_type'),
+            group_model = locale('ui_group_model'),
+            group_entity = locale('ui_group_entity'),
+            group_zone = locale('ui_group_zone'),
+        }
+    }))
 end)

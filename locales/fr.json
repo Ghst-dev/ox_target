@@ -12,5 +12,13 @@
   "debug_vehicle": "(Debug) Véhicule",
   "debug_object": "(Debug) Objet",
   "toggle_targeting": "Afficher le système d'interaction",
-  "go_back": "Retour"
+  "go_back": "Retour",
+  "ui_requires": "Nécessite",
+  "ui_restricted_to": "Réservé à",
+  "ui_too_far": "Trop loin",
+  "ui_group_general": "Général",
+  "ui_group_type": "Ce type",
+  "ui_group_model": "Ce modèle",
+  "ui_group_entity": "Cet objet",
+  "ui_group_zone": "Zone"
 }

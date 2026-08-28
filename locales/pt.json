@@ -12,5 +12,13 @@
   "debug_vehicle": "(Debug) Veículo",
   "debug_object": "(Debug) Objeto",
   "toggle_targeting": "Alternar mira",
-  "go_back": "Voltar"
+  "go_back": "Voltar",
+  "ui_requires": "Requer",
+  "ui_restricted_to": "Restrito a",
+  "ui_too_far": "Demasiado longe",
+  "ui_group_general": "Geral",
+  "ui_group_type": "Este tipo",
+  "ui_group_model": "Este modelo",
+  "ui_group_entity": "Este objeto",
+  "ui_group_zone": "Zona"
 }

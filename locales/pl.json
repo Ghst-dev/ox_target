@@ -12,5 +12,13 @@
   "debug_vehicle": "(Debug) Pojazd",
   "debug_object": "(Debug) Obiekt",
   "toggle_targeting": "Przełącz celowanie",
-  "go_back": "Wróć"
+  "go_back": "Wróć",
+  "ui_requires": "Wymaga",
+  "ui_restricted_to": "Tylko dla",
+  "ui_too_far": "Za daleko",
+  "ui_group_general": "Ogólne",
+  "ui_group_type": "Ten typ",
+  "ui_group_model": "Ten model",
+  "ui_group_entity": "Ten obiekt",
+  "ui_group_zone": "Strefa"
 }

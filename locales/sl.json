@@ -11,5 +11,14 @@
   "debug_ped": "(Debug) Pešec",
   "debug_vehicle": "(Debug) Vozilo",
   "debug_object": "(Debug) Predmet",
-  "toggle_targeting": "Vklopi/Izklopi tretje oko"
-  }
+  "toggle_targeting": "Vklopi/Izklopi tretje oko",
+  "go_back": "Nazaj",
+  "ui_requires": "Zahteva",
+  "ui_restricted_to": "Omejeno na",
+  "ui_too_far": "Predaleč",
+  "ui_group_general": "Splošno",
+  "ui_group_type": "Ta vrsta",
+  "ui_group_model": "Ta model",
+  "ui_group_entity": "Ta predmet",
+  "ui_group_zone": "Območje"
+}

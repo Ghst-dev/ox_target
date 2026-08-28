@@ -11,5 +11,14 @@
   "debug_ped": "(Debug) Peatón",
   "debug_vehicle": "(Debug) Vehículo",
   "debug_object": "(Debug) Objeto",
-  "toggle_targeting": "Activar/Desactivar apuntado"
+  "toggle_targeting": "Activar/Desactivar apuntado",
+  "go_back": "Volver",
+  "ui_requires": "Requiere",
+  "ui_restricted_to": "Restringido a",
+  "ui_too_far": "Demasiado lejos",
+  "ui_group_general": "General",
+  "ui_group_type": "Este tipo",
+  "ui_group_model": "Este modelo",
+  "ui_group_entity": "Este objeto",
+  "ui_group_zone": "Zona"
 }

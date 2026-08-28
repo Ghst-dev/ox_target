@@ -1,0 +1,218 @@
+/*
+ * Ghst design tokens — ported from the Ghostbase site's design system
+ * (RG/Ghostbase/src/lib/styles/tokens.css) so the server UI and the site read as
+ * the same brand.
+ *
+ * Carried over unchanged: the near-black neutrals, the two-tier cyan accent, the
+ * 6/8/12 radii, the 4px spacing scale, the motion durations and easings, and the
+ * neutral (never accent-tinted) resting shadows.
+ *
+ * Deliberately changed for a game overlay — see README for the reasoning:
+ *   - no light mode: this always sits over the game
+ *   - type scale shifted down ~1 step: 16px body is a reading size, not a HUD size
+ *   - surfaces are translucent, because the game shows through
+ *   - a success color was added; the site's palette has danger/warn but no success
+ *
+ * ACCENT SYSTEM — the site's rule, kept verbatim because it is what makes the
+ * palette feel deliberate rather than just "cyan":
+ *
+ *   --color-primary (#22d3ee)  calm / idle. Anything on screen at rest: buttons,
+ *     borders, links, general chrome.
+ *   --color-action  (#00e5ff)  something just happened. Only for live moments:
+ *     flashes, pop-ins, fill animations, a job completing.
+ *
+ * If it is on screen at rest, primary. If it is reacting to an event, action.
+ */
+
+/*
+ * `static` matters: by default Tailwind only emits the theme variables some
+ * utility actually references, so a token used only as `var(--color-action)`
+ * inside a Svelte <style> block would resolve to nothing. `static` emits all of
+ * them — this is a palette meant to be read both ways.
+ */
+@theme static {
+  /* ---- Type -------------------------------------------------------------
+     Inter if the machine has it, system stack otherwise. The site pulls Inter
+     from Google Fonts; that is not safe here, because CEF cannot be assumed to
+     have network access and a webfont that fails to load swaps mid-session. To
+     guarantee Inter, drop Inter.woff2 in web/public/fonts/ and @font-face it in
+     base.css — see README. */
+  --font-sans: 'Inter', 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', SFMono-Regular, Menlo, Consolas, monospace;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* One step down from the site's scale. Its 16px body is sized for reading a
+     page; an overlay is glanced at while driving and competes with the HUD. */
+  --text-meta: 10px;
+  --text-label: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-subheading: 16px;
+  --text-heading: 22px;
+  --text-display: 30px;
+
+  --leading-tight: 1.05;
+  --leading-heading: 1.2;
+  --leading-body: 1.6;
+
+  --tracking-tight: -0.03em;
+  --tracking-display: -0.02em;
+  --tracking-label: 0.06em;
+  --tracking-loose: 0.1em;
+
+  /* ---- Surfaces / neutrals ---------------------------------------------
+     Same near-black system as the site. */
+  --color-bg: #0a0a0a;
+  --color-surface: #111111;
+  --color-surface-2: #1e1e1e;
+  --color-border: #2a2a2a;
+
+  --color-white: #ffffff;
+  --color-gray: #a1a1a1;
+  --color-dim: #6b6b6b;
+
+  /* ---- Accent — two-tier cyan ------------------------------------------ */
+  --color-primary: #22d3ee;
+  --color-action: #00e5ff;
+
+  /* ---- Semantic feedback ------------------------------------------------
+     danger/warn are the site's. success is new: the site never needed one, and a
+     game UI does (stored, paid, job complete). Picked far enough around the wheel
+     from #22d3ee to not read as a dimmer cyan. */
+  --color-danger: #ff5050;
+  --color-danger-text: #ff6464;
+  --color-warn: #ffa03c;
+  --color-success: #3ecf8e;
+
+  /* ---- Shape ------------------------------------------------------------ */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* ---- Depth ------------------------------------------------------------
+     Neutral at rest, exactly as on the site — accent tint is reserved for hover
+     and focus, so a resting panel never glows at the player. Heavier than the
+     site's because a panel here has to separate from whatever the game is
+     rendering behind it. */
+  --shadow-panel: 0 12px 40px rgba(0, 0, 0, 0.55);
+  --shadow-raised: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+  /* backdrop-blur-panel. Only meaningful for one in-page layer over another —
+     it cannot blur the game. See README and client/main.lua. */
+  --blur-panel: 12px;
+
+  /* ---- Motion ----------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/*
+ * Tokens with no Tailwind namespace. Plain variables, used via var().
+ */
+:root {
+  /* Translucent surfaces. The opaque tokens above are the source of truth; these
+     are the same colors at the alpha an overlay wants. Raise the alpha on
+     anything holding dense text — a vehicle list over bright daylight needs it. */
+  --surface-panel: rgba(17, 17, 17, 0.92);
+  --surface-raised: rgba(30, 30, 30, 0.92);
+  --surface-sunken: rgba(10, 10, 10, 0.7);
+  --scrim: rgba(10, 10, 10, 0.6);
+
+  /*
+   * AMBIENT SURFACES — the second tier, for anything drawn over live gameplay.
+   *
+   * The surfaces above are the FOCUSED tier: a panel that has taken NUI focus, with the
+   * game held still behind it. The player is reading dense text and the scene is not
+   * competing, so 0.92 opacity and a heavy shadow cost nothing.
+   *
+   * An instrument, a notification or a target label is a different problem. It sits over
+   * moving gameplay the player still has to see through, at every hour of the in-game day,
+   * and it is never the thing being looked at. So: lighter, tighter, and edge-lit rather
+   * than edge-drawn.
+   *
+   *   --border-ambient is white at 9% rather than a dark grey, and that is the
+   *   load-bearing part. A solid #2a2a2a edge is DARKER than a night sky, so a panel
+   *   wearing it reads as a hole punched in the screen at exactly the hour when surface
+   *   and background are nearest in value. A white edge lifts against whatever is behind.
+   *
+   *   --shadow-ambient is 10px, not 40px. A 40px shadow under a small always-on element
+   *   smears across pale concrete as a grey bruise; a tight one reads as a lifted chip.
+   *
+   * THE RULE: if the game is moving behind it, ambient. If the game is dimmed behind it,
+   * focused. That is the same shape as the primary/action rule above — a question about
+   * the moment, not about the component.
+   */
+  --surface-ambient: rgba(9, 11, 13, 0.82);
+  --border-ambient: rgba(255, 255, 255, 0.09);
+  --shadow-ambient: 0 2px 10px rgba(0, 0, 0, 0.45);
+
+  /*
+   * For glyphs and strokes with NO surface under them at all — a target label on the
+   * world, a conformal stroke. Ambient text that sits on --surface-ambient does not need
+   * this; text drawn straight onto the scene does.
+   */
+  --legible-glyph: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+
+  /*
+   * The TEXT counterpart, for words drawn straight onto the scene. Four offset copies at
+   * zero blur rather than a blurred drop: each copy sits BEHIND the glyph, so nothing
+   * encroaches on the letterform and there is no width ceiling; the four diagonals close
+   * the ring; and with no blur radius there is no grey cloud around small type. qb-hud and
+   * ps-hud both arrived at this rule at the same 0.7 alpha, independently.
+   *
+   * ONE MECHANISM, NEVER TWO. Anything carrying --legible-text must not also sit inside a
+   * filtered container -- that double-inking is what makes a HUD shout.
+   */
+  --legible-text: -1px -1px 0 rgba(0, 0, 0, 0.7), 1px -1px 0 rgba(0, 0, 0, 0.7),
+    -1px 1px 0 rgba(0, 0, 0, 0.7), 1px 1px 0 rgba(0, 0, 0, 0.7);
+
+  /* Glass edge: a 1px top highlight sells "pane of glass" far more cheaply than
+     more blur does, and costs nothing per frame. */
+  --edge-highlight: rgba(255, 255, 255, 0.06);
+
+  /*
+   * Accent glows, same alphas as the site.
+   *
+   * These are TINTS, to be composited over a surface — never a surface themselves.
+   * --primary-glow is 8% alpha, so
+   *
+   *     background: var(--primary-glow);              WRONG on anything with a surface
+   *
+   * discards whatever opaque background the element had and leaves it 92% transparent,
+   * which in a game overlay means the scene shows through the one element you are
+   * pointing at.
+   *
+   * HOVER CONVENTION. Do not reach for a tinted fill as the fix, either. A hovered row
+   * keeps a NEUTRAL surface one step lighter and carries the accent on its border and
+   * text:
+   *
+   *     background: var(--color-surface-2);           the row's surface, one step up
+   *     border-color: var(--primary-glow-border);     accent on the edge
+   *     color: var(--color-white);
+   *
+   * A hue in the fill makes the hovered element read as a different material from its
+   * neighbours rather than the same one highlighted. Every hover in the system follows
+   * the neutral form; four did not, and looked wrong next to the rest.
+   *
+   * --primary-glow-border and --action-glow are fine as borders and shadows, which is
+   * what they are for. The raw fill token is only correct on an element with no
+   * background of its own that is already sitting on a panel — a calendar range.
+   */
+  --primary-glow: rgba(34, 211, 238, 0.08);
+  --primary-glow-border: rgba(34, 211, 238, 0.25);
+  --action-glow: rgba(0, 229, 255, 0.35);
+
+  --ring-accent: 0 0 0 3px var(--primary-glow);
+  --ring-action: 0 0 0 3px var(--action-glow);
+
+  --dur-fast: 0.15s;
+  --dur-base: 0.2s;
+  --dur-slow: 0.3s;
+  --dur-enter: 0.65s;
+}

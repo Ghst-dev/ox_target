@@ -12,5 +12,13 @@
   "debug_vehicle": "(Debug) Vozidlo",
   "debug_object": "(Debug) Objekt",
   "toggle_targeting": "Výběr zaměření",
-  "go_back": "Zpět"
+  "go_back": "Zpět",
+  "ui_requires": "Vyžaduje",
+  "ui_restricted_to": "Vyhrazeno pro",
+  "ui_too_far": "Příliš daleko",
+  "ui_group_general": "Obecné",
+  "ui_group_type": "Tento typ",
+  "ui_group_model": "Tento model",
+  "ui_group_entity": "Tento objekt",
+  "ui_group_zone": "Zóna"
 }

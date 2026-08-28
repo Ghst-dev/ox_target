@@ -12,5 +12,13 @@
   "debug_vehicle": "(Debug) Vehicle",
   "debug_object": "(Debug) Object",
   "toggle_targeting": "Apri/Chiudi targeting",
-  "go_back": "Indietro"
+  "go_back": "Indietro",
+  "ui_requires": "Richiede",
+  "ui_restricted_to": "Riservato a",
+  "ui_too_far": "Troppo lontano",
+  "ui_group_general": "Generale",
+  "ui_group_type": "Questo tipo",
+  "ui_group_model": "Questo modello",
+  "ui_group_entity": "Questo oggetto",
+  "ui_group_zone": "Zona"
 }
