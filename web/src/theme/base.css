@@ -94,4 +94,49 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+  /*
+   * DENSITY — Material 3's component density scale, as a contract in the same shape as the one
+   * above: inert CSS until an element carries the attribute.
+   *
+   *     <aside class="cluster" data-density="-1">      one step tighter
+   *     :root[data-density='-2']                       a whole UI that is only ever ambient
+   *
+   * WHY THE STEPS ARE RESTATED HERE rather than simply setting `--density`. A `var()` inside a
+   * custom property is substituted on the element that declares the property, so overriding
+   * `--density` alone leaves every `--space-*` still holding the value it computed on `:root`.
+   * Re-declaring them on the same element as the override is what makes the term reach them.
+   * The full reasoning, and the measurement, are in `theme/tokens.css` beside `--density`.
+   *
+   * THE COEFFICIENTS BELOW MUST MATCH THAT FILE'S. They are the same seven expressions; only
+   * the element they are computed on differs. If a step moves there, move it here.
+   *
+   * `--space-0` through `--space-1-5` are deliberately absent, exactly as they are absent from
+   * the term at rest: below 8px the numbers are hairlines and edge insets, and two pixels is
+   * most of the measurement.
+   */
+  [data-density='-1'] {
+    --density: -1;
+  }
+
+  [data-density='-2'] {
+    --density: -2;
+  }
+
+  [data-density='-1'],
+  [data-density='-2'] {
+    /* `--density-step` is restated first, and it is the declaration easiest to leave out: it is
+       itself a custom property holding a `var()`, so the copy inherited from `:root` was already
+       resolved against a density of 0. Re-declaring only the steps below moves no pixel at all,
+       which is how the first draft of this block was written and how it was caught. */
+    --density-step: calc(var(--density, 0) * 2 * var(--ui-px));
+
+    --space-2: calc(8 * var(--ui-px) + var(--density-step));
+    --space-3: calc(12 * var(--ui-px) + var(--density-step));
+    --space-4: calc(16 * var(--ui-px) + var(--density-step));
+    --space-5: calc(20 * var(--ui-px) + var(--density-step));
+    --space-6: calc(24 * var(--ui-px) + var(--density-step));
+    --space-8: calc(32 * var(--ui-px) + var(--density-step));
+    --space-10: calc(40 * var(--ui-px) + var(--density-step));
+  }
 }

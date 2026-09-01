@@ -3,9 +3,15 @@
  * (RG/Ghostbase/src/lib/styles/tokens.css) so the server UI and the site read as
  * the same brand.
  *
- * Carried over unchanged: the near-black neutrals, the two-tier cyan accent, the
- * 6/8/12 radii, the 4px spacing scale, the motion durations and easings, and the
- * neutral (never accent-tinted) resting shadows.
+ * Carried over: the near-black neutrals, the two-tier cyan accent, the 6/8/12 radii,
+ * the 4px spacing scale, the motion durations and easings, and the neutral (never
+ * accent-tinted) resting shadows.
+ *
+ * It used to say "carried over UNCHANGED", and that is no longer true of three of them.
+ * `--color-gray`, `--color-dim` and `--color-danger-text` were measured against the surfaces
+ * they land on *here* -- which are the site's colours over a game frame, not over a page -- and
+ * lifted until they meet WCAG's 4.5:1. See the note beside each, and `Tools/checks/contrast.py`,
+ * which is now a gate.
  *
  * Deliberately changed for a game overlay — see README for the reasoning:
  *   - no light mode: this always sits over the game
@@ -23,6 +29,84 @@
  *
  * If it is on screen at rest, primary. If it is reacting to an event, action.
  */
+
+/*
+ * THE ONE RUNTIME VALUE IN THIS FILE, and the reason it is not in `@theme` below: `--ui-scale` is
+ * written by JavaScript, on the document element, from a player preference that `ghst_prefs` owns.
+ * Everything in `@theme` is a constant the designer chose; this is a number the player chose, and
+ * the two do not belong in the same block.
+ *
+ * THIS FORK HAS NO WRITER FOR IT YET. Every other themed resource carries `lib/prefs.svelte.ts`;
+ * ox_target does not, so `--ui-scale` falls to its default of 1 and the type scale below computes
+ * to exactly the fixed pixel sizes it held before. That is the point: the file is now *able* to
+ * answer the preference, and stops being silently wrong the moment the transport is wired.
+ *
+ * It was silently wrong until 2026-09-01. This copy predates `--ui-px`, so all seven type steps
+ * were frozen in device pixels while the other seventeen resources scaled -- every world-target
+ * label ignored the player's interface-size setting, and no build said so, because
+ * `Tools/checks/copies.py` filtered on a `ghst_` prefix and could not see this file at all.
+ *
+ * Wiring the transport is a licence question rather than a technical one: `prefs.svelte.ts` is
+ * GPL and this fork is MIT, so it cannot simply be copied in the way it was into ox_inventory.
+ * A declaration of two custom properties is not that -- it is the palette this fork was
+ * deliberately given, finished.
+ */
+:root {
+  --ui-scale: 1;
+  --ui-px: calc(var(--ui-scale, 1) * 1px);
+
+  /*
+   * DENSITY -- Material 3's component density scale, and the last item on this tree's M3
+   * take-list to be built (`txData/ghst_sv/docs/ui-system.md` section 3, and its item 13).
+   *
+   * M3 numbers density 0 for a component's default and counts *down* -- -1, -2, -3 -- as the
+   * internal spacing tightens, "typically by decreasing the top and bottom padding or overall
+   * height by 4dp" a step. Subtractive, deliberately, and that is the part worth copying: a
+   * ratio makes a 4px gap vanish while a 40px one only loses ten, and in a dense layout the
+   * small gaps are precisely the ones still holding groups apart.
+   *
+   * So it is subtractive here too, at 2px a step rather than 4 -- the same argument the
+   * `--space-*` scale below is built on, that this is an overlay competing with a HUD and not a
+   * page. And it reaches the steps from `--space-2` up only. Below that the numbers are
+   * hairlines and edge insets, where two pixels is most of the measurement.
+   *
+   * THE KNOB IS NOT INHERITED, AND THAT IS THE TRAP. Measured in a browser rather than reasoned
+   * about, because the reasoning was wrong first: a `var()` inside a custom property's value is
+   * substituted at COMPUTED-VALUE TIME on the element that DECLARES the property, and what
+   * descendants inherit is the already-substituted result. So
+   *
+   *     .cluster { --density: -1; }
+   *
+   * on its own changes nothing. `--space-3` was resolved on `:root` while `--density` was still
+   * 0, and the cluster inherits a flat `12px`. `--ui-scale` above has exactly the same property
+   * and has never shown it, only because nothing has ever overridden it in a subtree.
+   *
+   * So a tier RE-DECLARES the steps -- and `--density-step` with them, which is the same trap one
+   * level down -- on the same element that sets `--density`. That block is written once, in
+   * `theme/base.css`, keyed on `[data-density]`: the same contract shape as
+   * the `[data-reduce-motion]` rule beside it. It does nothing until an element carries the
+   * attribute:
+   *
+   *     <div class="cluster" data-density="-1">
+   *
+   * The alternative does work and is refused: declaring the whole scale on `*` makes every
+   * element re-resolve it, at eleven calc() values per element per style recalc, on pages that
+   * update every frame -- to serve a knob no component uses yet.
+   *
+   * It composes with `--ui-scale` either way: a player who has scaled the interface up still
+   * gets the tier's tightening, because the term is subtracted after the scale is applied.
+   *
+   * DEFAULT 0, AND LEAVE IT THERE FOR ANYTHING THE PLAYER OPERATES. M3's caution is written
+   * about touch targets and holds just as well for a mouse: do not tighten a menu being chosen
+   * from, or a dialog reporting that something changed. The tier this exists for is the one
+   * drawn over live gameplay and never clicked -- the ambient tier already described further
+   * down, which now has a knob instead of a second set of numbers.
+   *
+   * At 0 it subtracts nothing, so declaring it moved no pixel on the day it landed.
+   */
+  --density: 0;
+  --density-step: calc(var(--density, 0) * 2 * var(--ui-px));
+}
 
 /*
  * `static` matters: by default Tailwind only emits the theme variables some
@@ -47,14 +131,26 @@
   --font-weight-extrabold: 800;
 
   /* One step down from the site's scale. Its 16px body is sized for reading a
-     page; an overlay is glanced at while driving and competes with the HUD. */
-  --text-meta: 10px;
-  --text-label: 11px;
-  --text-sm: 13px;
-  --text-base: 15px;
-  --text-subheading: 16px;
-  --text-heading: 22px;
-  --text-display: 30px;
+     page; an overlay is glanced at while driving and competes with the HUD.
+
+     Expressed in `--ui-px` rather than in `px`, so the whole scale answers the player's
+     interface-size preference at once. The numbers are unchanged: at the default scale of 1 this
+     computes to exactly what it always was. Sizes that are deliberately NOT type -- a hairline, a
+     radius, an icon box -- stay in real pixels, because a 1px rule that scales is a 1.5px rule
+     that no longer reads as a hairline. */
+  /* One step below `--text-meta`, for a caption that has to sit inside something rather than
+     beside it -- an inline unit, a keycap hint, a mono badge on a log row. It was `ghst_hud`'s
+     own extension while only the editor rail needed it; `ghst_admin` turned out to be writing
+     the same 9px by hand in six places, and a size two resources need is the shared scale's,
+     not a resource's. Below this, type stops being read and starts being texture. */
+  --text-micro: calc(9 * var(--ui-px));
+  --text-meta: calc(10 * var(--ui-px));
+  --text-label: calc(11 * var(--ui-px));
+  --text-sm: calc(13 * var(--ui-px));
+  --text-base: calc(15 * var(--ui-px));
+  --text-subheading: calc(16 * var(--ui-px));
+  --text-heading: calc(22 * var(--ui-px));
+  --text-display: calc(30 * var(--ui-px));
 
   --leading-tight: 1.05;
   --leading-heading: 1.2;
@@ -65,6 +161,55 @@
   --tracking-label: 0.06em;
   --tracking-loose: 0.1em;
 
+  /* ---- Space ------------------------------------------------------------
+     The header of this file has claimed "the 4px spacing scale" among the things carried over
+     from the site since it was written. It was not carried over -- no `--space-*` token existed
+     anywhere in the tree until 2026-09-01, and what stood in for one was 621 hand-written pixel
+     values across 20 distinct steps. 3, 5, 7, 9, 10, 11, 14, 18, 22 and 26 all appeared, which is
+     roughly 355 uses off any grid. See `txData/ghst_sv/docs/ui-system.md` for the measurement.
+
+     Nothing was individually wrong, and that is exactly why it decayed: a 10px gutter beside a
+     12px one reads as sloppiness only in aggregate, and only with two panels open at once. Colour
+     held over the same period because colour had two gates. Rhythm had none.
+
+     EXPRESSED IN `--ui-px`, for the same reason the type scale above is. Before this, type
+     answered the player's interface-size preference and the box around it did not -- at scale 1.6
+     ghst_banking's account names truncate while its gutters pinch to about two-thirds of their
+     designed proportion. The panel gets structurally tighter at exactly the setting a player
+     reaches for *because* they were struggling to read it.
+
+     NOT A PURE 4px GRID, deliberately. Material's 4dp grid is the right instinct for a page; this
+     is an overlay competing with a HUD, and the measurement says so -- 6px is used 87 times and
+     2px 55 times, and rounding all 142 to the nearest multiple of four would coarsen the densest
+     parts of the UI to make a table look tidier. So: 2px steps while the numbers are small, 4px
+     once they are big enough for the difference to read, 8px at the top. That is the same shape
+     as Tailwind's own scale, which is where the half-step names come from.
+
+     Steps that exist because the tree already uses them heavily are marked with their count.
+
+     AND THEY CARRY `--density-step`, from `--space-2` up -- see the block at the top of this
+     file. That is the second knob a box answers, and the two are different questions: `--ui-px`
+     is how big the player asked for everything to be, `--density` is how tight this particular
+     tier is. A dense ambient cluster at scale 1.6 should still be tighter than a focused panel
+     at scale 1.6, which is only true while the tightening is a term and not a factor. */
+  --space-0: 0;
+  --space-0-5: calc(2 * var(--ui-px)); /* absorbed 2px x71 and 3px x57 */
+  --space-1: calc(4 * var(--ui-px)); /* 4px x125, 5px x68 */
+  --space-1-5: calc(6 * var(--ui-px)); /* 6px x129, 7px x50 */
+  --space-2: calc(8 * var(--ui-px) + var(--density-step)); /* 8px x163, 9px x34, 10px x127 */
+  --space-3: calc(12 * var(--ui-px) + var(--density-step)); /* 11px x4, 12px x78, 13px x3, 14px x39 */
+  --space-4: calc(16 * var(--ui-px) + var(--density-step)); /* 16px x44, 18px x15 */
+  --space-5: calc(20 * var(--ui-px) + var(--density-step)); /* 20px x10, 22px x3 */
+  --space-6: calc(24 * var(--ui-px) + var(--density-step)); /* 24px x11, 26px x4, 28px x3 */
+  --space-8: calc(32 * var(--ui-px) + var(--density-step)); /* 30px x2, 34px x2 */
+  --space-10: calc(40 * var(--ui-px) + var(--density-step)); /* 40px x1 */
+
+  /* A hairline gap, and the one step deliberately NOT scaled -- same reasoning as the note on the
+     type scale above. A 1px rule that scales is a 1.5px rule that no longer reads as a hairline,
+     and a 1px *gap* is always separating two things by the thinnest amount the display can draw
+     rather than by an amount proportional to anything. */
+  --space-px: 1px;
+
   /* ---- Surfaces / neutrals ---------------------------------------------
      Same near-black system as the site. */
   --color-bg: #0a0a0a;
@@ -73,8 +218,34 @@
   --color-border: #2a2a2a;
 
   --color-white: #ffffff;
-  --color-gray: #a1a1a1;
-  --color-dim: #6b6b6b;
+  /*
+   * MEASURED, NOT CARRIED OVER. The site's neutrals were taken verbatim and never checked
+   * against the surfaces they landed on here, which are not the site's -- they are translucent,
+   * and a panel over noon concrete is #242424 where the same panel over a night sky is #101010.
+   * `Tools/derive/contrast.py` composites every plane over both extremes and judges each ink at
+   * its worst; two of the three greys failed WCAG's 4.5:1 for body text and are lifted to the
+   * smallest value that passes, hue and saturation untouched.
+   *
+   *   --color-gray  #a1a1a1 -> #a2a2a2   4.50 -> 4.55 on a selected row over daylight
+   *   --color-dim   #6b6b6b -> #8b8b8b   2.91 -> 4.55 on a panel over daylight
+   *
+   * Grey is a rounding tie and the change is invisible; dim is not, and it is the one that
+   * mattered. #6b6b6b never reached 4.5 on any plane in the theme -- its best case, a
+   * placeholder inside a sunken well, was 3.27 -- and it is the colour every uppercase 11px
+   * caption in the tree is written in.
+   *
+   * THERE ARE ONLY EVER TWO LEGIBLE GREY TIERS ON A DARK SURFACE, and finding that out is what
+   * decided the value. Judged on the same planes as `--color-gray`, `--color-dim` derives to
+   * #a2a2a2 -- it collapses into the tier above it. It stays a distinct step only because its
+   * duty is narrower: a caption sits on the panel or in a well, never inside a row that hovers
+   * or selects. M3 arrives at the same wall from the other side and simply stops at two roles,
+   * `on-surface` and `on-surface-variant`.
+   *
+   * The cost is that dim is now a good deal brighter, and it is used for structure as well as
+   * for type -- a divider or a gauge track in dim will read stronger than it did.
+   */
+  --color-gray: #a2a2a2;
+  --color-dim: #8b8b8b;
 
   /* ---- Accent — two-tier cyan ------------------------------------------ */
   --color-primary: #22d3ee;
@@ -85,11 +256,26 @@
      game UI does (stored, paid, job complete). Picked far enough around the wheel
      from #22d3ee to not read as a dimmer cyan. */
   --color-danger: #ff5050;
-  --color-danger-text: #ff6464;
+  /* Also measured. #ff6464 is 3.44:1 on a hovered ambient element over daylight, and the ambient
+     tier is exactly where danger has to be read -- it is the HUD's most important colour. Lifted
+     to 4.50:1, which makes it paler than instinct wants; M3's own dark-theme error role is
+     #F2B8B5, paler still, for precisely this reason. The full-strength `--color-danger` above is
+     a FILL and is not judged as ink. */
+  --color-danger-text: #ff8e8e;
   --color-warn: #ffa03c;
   --color-success: #3ecf8e;
 
-  /* ---- Shape ------------------------------------------------------------ */
+  /* ---- Shape ------------------------------------------------------------
+     `--radius-xs` is the INNER-CORNER step, and it is here for Material's optical roundness
+     rule: nesting a rounded box in a rounded box wants `outer - padding = inner`, or the two
+     curves read as unbalanced rather than concentric. A `--radius-lg` panel with a `--space-2`
+     gutter asks for exactly 4, and 4 was not on this scale -- so a nested well either repeated
+     its parent's radius or picked a number, and on a wide card both are visible.
+
+     The rest of M3's ten-step shape scale is not adopted. It runs 0/4/8/12/16/20/28/32/48/full
+     and the top half of that is phone shapes; 6/8/12 is the site's, and the server reads as the
+     site. What was missing was one step at the bottom, not a different family. */
+  --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
@@ -107,9 +293,32 @@
      it cannot blur the game. See README and client/main.lua. */
   --blur-panel: 12px;
 
-  /* ---- Motion ----------------------------------------------------------- */
+  /* ---- Motion -----------------------------------------------------------
+     The first two are the site's and they stay: everything written so far uses them, and
+     `--ease-inout` is literally Material 2's standard curve, so half of this was already M3's
+     ancestor.
+
+     The two below are M3's EMPHASIZED set, taken because Material's contribution to motion here
+     is not a nicer curve -- it is the rule that arriving and leaving are not the same event. A
+     thing entering begins at peak velocity and settles; a thing dismissed begins at rest and
+     leaves at peak velocity, and that is what makes it read as *gone* rather than as parked
+     just off-screen. M3 pairs them with unequal durations for the same reason -- 400ms in,
+     200ms out -- because an exit is not the player's next task and should not be charged at the
+     same rate.
+
+     So the pairing, which is the whole point of having them:
+
+         arriving      transition: ... var(--dur-slow) var(--ease-enter);
+         dismissed     transition: ... var(--dur-fast) var(--ease-exit);
+         everything else -- hovers, fills, anything that begins and ends on screen -- `--ease-out`.
+
+     M3's third curve, plain "emphasized", is deliberately absent: it is a two-segment path that
+     Android and Flutter interpolate, it has no `cubic-bezier()` form, and the spec's own web
+     guidance is to fall back to standard. There is nothing to declare. */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
 }
 
 /*
@@ -152,6 +361,135 @@
   --border-ambient: rgba(255, 255, 255, 0.09);
   --shadow-ambient: 0 2px 10px rgba(0, 0, 0, 0.45);
 
+
+  /*
+   * PLANE, TINT, STATE — the third rule, and the one that corrects the other two rather than
+   * extending them. Added 2026-09-01; the measurement is in `txData/ghst_sv/docs/ui-system.md`.
+   *
+   * The two tiers above answer *which* surface. They never answered what happens INSIDE one, and
+   * the practice that grew in the gap expressed depth by REPLACING the surface. Stacked alphas
+   * multiply rather than replace, so each replacement drove the overlay towards a solid slab.
+   * Taking ghst_banking, which was representative rather than unusual, and measuring how much of
+   * the game still reaches the eye through the whole stack:
+   *
+   *     .panel      --surface-panel    rgba(17,17,17,0.92)    7.8% of the game visible
+   *      └ input    --surface-sunken   rgba(10,10,10,0.70)    2.4%
+   *         └ hover --color-surface-2  #1e1e1e                0.0%  -- a fully opaque plate
+   *
+   * So the overlay stopped being translucent in exactly the two places the surface system exists
+   * for: where the content is, and at the moment of engagement. 51 of the tree's 63 hover rules
+   * were that last line.
+   *
+   *   THE RULE: one translucent plane per stack. Alpha belongs to the OUTERMOST surface only.
+   *   Everything nested inside it is a tint OF THAT PLANE, never a second alpha.
+   *
+   * A tint is depth drawn ON the plane: black to recess, white to lift. The same three stacks
+   * become 7.8% / 5.9% / 7.1% -- a 5.9-7.1 band rather than a slide to zero, so the panel reads as
+   * one piece of glass with depth on it instead of a stack of progressively opaque plates.
+   *
+   * The second reason is the one that will matter more over time: A TINT COMPOSITES IDENTICALLY
+   * OVER ANY PLANE AND A SECOND ALPHA DOES NOT. `--surface-sunken` inside a focused 0.92 panel and
+   * the same token inside an ambient 0.82 element give different results, so a component moved
+   * between the two tiers silently changed appearance. A tint cannot do that.
+   *
+   * This is Material 3's composition model and it is taken deliberately, because it is the part of
+   * M3 that survives being stacked. Its *elevation* model is refused in the same breath: M3 signals
+   * depth by tinting an opaque surface, and nothing here is opaque.
+   */
+  --tint-sunken: rgba(0, 0, 0, 0.28);
+  --tint-raised: rgba(255, 255, 255, 0.04);
+
+  /*
+   * SEMANTIC CONTAINERS -- Material's `*-container` roles, in this system's own vocabulary.
+   *
+   * M3's second colour idea, after `on-*` pairing, is that a semantic colour comes in two
+   * strengths: the full-strength role for a solid fill, and a low-emphasis CONTAINER for the
+   * quiet tinted badge or chip that is far more common. The container is what a "Stored" pill or
+   * a "Wanted" tag actually wants, and until now every one of them was a hand-written
+   * `rgba(62, 207, 142, 0.12)` at the call site -- the same three values, retyped, uncounted, and
+   * part of the 25 stray hex the tree-wide survey found outside `theme/`.
+   *
+   * They are TINTS and not surfaces, so the rule above governs them: one translucent plane per
+   * stack, and a badge is not a plane. `--container-danger` over an ambient element and over a
+   * focused panel composite to the same relationship, which a second alpha would not.
+   *
+   * THE `on-` PARTNER IS THE SEMANTIC COLOUR ITSELF -- `--color-success` on
+   * `--container-success`, `--color-danger-text` on `--container-danger` -- and that pairing is
+   * asserted by `Tools/derive/contrast.py` rather than assumed, because a 12% wash of a bright
+   * hue lifts the background under exactly the ink that has to stay readable on it.
+   *
+   * `--container-danger` and `--state-danger` hold the same value and both stay. They answer
+   * different questions: one is a badge that *is* the element, the other is a wash added over a
+   * slot refusing what is being dragged onto it. Two names for one value is fine; two answers to
+   * one question is not.
+   */
+  --container-success: rgba(62, 207, 142, 0.12);
+  --container-warn: rgba(255, 160, 60, 0.12);
+  --container-danger: rgba(255, 80, 80, 0.12);
+
+  /*
+   * STATE LAYERS. Interaction is a wash ADDED to whatever is beneath, never a swap to a different
+   * surface -- so a row lights up without ever becoming a hole in the screen, and the same four
+   * values are correct on a plane, on a tint, and on nothing at all.
+   *
+   * Selected is the accent rather than white, because "this one" is a different statement from
+   * "your pointer is here" and the two stack: a selected row under the cursor wears both.
+   *
+   * THE PERCENTAGES ARE NOT MATERIAL'S, AND THAT IS DELIBERATE. M3 specifies hover +8%, focus
+ * +10%, press +10%, drag +16%, all measured over an OPAQUE container where a wash has to fight
+ * the container's own value. Here they are 6/9/12/16 over glass with gameplay behind it, so the
+ * same apparent step costs less -- and M3 giving focus and press the same 10% collapses a
+ * distinction a keyboard-driven panel needs. Drag is taken at 16% unchanged, because it is the
+ * one that has to be unmistakable across a whole grid of slots at once.
+ *
+ * NEVER `color-mix()`. Every Material snippet on the web writes a state layer as
+   * `color-mix(in srgb, var(--on-surface) 8%, transparent)`, `color-mix()` shipped in Chromium
+   * 111, and `ghst_cefprobe` measured this runtime at 103 with experimental features on -- an
+   * effective ceiling near 108. It works perfectly in `pnpm dev` and renders as nothing in game.
+   */
+  --state-hover: rgba(255, 255, 255, 0.06);
+  --state-focus: rgba(255, 255, 255, 0.09);
+  --state-pressed: rgba(255, 255, 255, 0.12);
+  --state-selected: rgba(34, 211, 238, 0.14);
+  /* Drag is Material's fourth state, and this tree has a real population for it: ox_inventory
+     drags an item across a grid of slots, and the slot being dragged over said exactly what a
+     slot the pointer merely passed across said. It is the loudest of the four because it is the
+     only one that persists while the player is holding something and looking for where it
+     goes. */
+  --state-drag: rgba(255, 255, 255, 0.16);
+  /* A refusal is a state too -- a slot that will not take what is being dragged onto it. Same
+     mechanism, the semantic colour instead of the accent. */
+  --state-danger: rgba(255, 80, 80, 0.12);
+
+  /*
+   * The same four as a stackable background LAYER, for an element that already carries a
+   * background-color of its own -- a tinted well that also hovers. Two colours cannot be layered
+   * in `background-color`, so the state goes in `background-image`, where any number of layers can
+   * sit over the colour:
+   *
+   *     background-color: var(--tint-sunken);
+   *     background-image: var(--layer-hover);
+   *
+   * An element with NO background of its own wants the plain `--state-*` colour instead; the
+   * gradient form exists only because CSS has no other way to composite two colours on one box.
+   */
+  --layer-hover: linear-gradient(var(--state-hover), var(--state-hover));
+  --layer-focus: linear-gradient(var(--state-focus), var(--state-focus));
+  --layer-pressed: linear-gradient(var(--state-pressed), var(--state-pressed));
+  --layer-selected: linear-gradient(var(--state-selected), var(--state-selected));
+  --layer-drag: linear-gradient(var(--state-drag), var(--state-drag));
+  --layer-danger: linear-gradient(var(--state-danger), var(--state-danger));
+
+  /*
+   * Ink for anything FILLED with the accent. One token and not a full Material `on-*` role set,
+   * because the measurement did not support one: every solid `--color-primary` fill in the tree
+   * today is decorative -- a 5px dot, a 2px rail, a progress bar -- and carries no text at all.
+   * Inventing five roles for a population of zero would be a system for its own sake.
+   *
+   * It is here because the first filled *button* will need it and will otherwise guess. White on
+   * #22d3ee is about 1.9:1 and fails at any size; this near-black is about 10:1.
+   */
+  --color-on-accent: #04252b;
   /*
    * For glyphs and strokes with NO surface under them at all — a target label on the
    * world, a conformal stroke. Ambient text that sits on --surface-ambient does not need
