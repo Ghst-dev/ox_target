@@ -243,7 +243,7 @@
     position: absolute;
     right: 20px;
     bottom: 20px;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-full);
     background: var(--color-warn);
     color: var(--color-bg);
@@ -261,9 +261,9 @@
     bottom: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-1-5);
     width: 220px;
-    padding: 16px;
+    padding: var(--space-4);
     background: var(--surface-panel);
     border-right: 1px solid var(--color-border);
     pointer-events: auto;
@@ -273,12 +273,12 @@
   h2 {
     font-size: var(--text-sm);
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: var(--space-1-5);
   }
 
   .action {
     width: 100%;
-    padding: 7px 10px;
+    padding: var(--space-1-5) var(--space-2);
     text-align: left;
     background: var(--color-surface-2);
     border: 1px solid var(--color-border);
@@ -293,8 +293,8 @@
   .toggle {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 8px;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
     font-size: var(--text-meta);
     color: var(--color-gray);
   }

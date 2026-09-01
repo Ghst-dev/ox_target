@@ -102,9 +102,9 @@
     overflow: hidden;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-2);
     width: 100%;
-    padding: 7px 12px 7px 10px;
+    padding: var(--space-1-5) var(--space-3) var(--space-1-5) var(--space-2);
     /* Ambient tier. The row is the only surface between the text and the game -- OptionList
        dropped the panel it used to sit on -- so it carries the separation itself, and it is
        doing that over live gameplay rather than a dimmed scene. */
@@ -128,7 +128,7 @@
   /* Neutral lift, accent on the edges only — the shared hover convention, see
      tokens.css. The left rule stays the strongest signal of which row is live. */
   .option:hover:not(.blocked) {
-    background: var(--color-surface-2);
+    background-image: var(--layer-hover);
     border-color: var(--primary-glow-border);
     border-left-color: var(--color-primary);
     color: var(--color-white);
@@ -137,6 +137,7 @@
 
   /* Blocked entries are shown, not hidden — but they must never read as clickable. */
   .blocked {
+    background: rgba(10, 10, 10, 0.88);  /* CEF 103 has no color-mix() -- see theme/base.css */
     background: color-mix(in srgb, var(--color-bg) 88%, transparent);
     border-style: dashed;
     color: var(--color-dim);
@@ -184,7 +185,7 @@
   .hotkey {
     flex: none;
     min-width: 15px;
-    padding: 1px 4px;
+    padding: var(--space-px) var(--space-1);
     border: 1px solid var(--border-ambient);
     border-radius: 4px;
     font-family: var(--font-mono);
@@ -214,6 +215,7 @@
     inset: 0;
     width: 0;
     border-radius: inherit;
+    background: rgba(0, 229, 255, 0.22);  /* CEF 103 has no color-mix() -- see theme/base.css */
     background: color-mix(in srgb, var(--color-action) 22%, transparent);
     border-right: 1px solid var(--color-action);
     pointer-events: none;

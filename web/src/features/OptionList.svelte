@@ -186,10 +186,10 @@
     top: 50%;
     left: 50%;
     transform: translateY(-50%);
-    margin-left: 28px;
+    margin-left: var(--space-6);
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: var(--space-0-5);
     width: max-content;
     min-width: 150px;
     max-width: 260px;
@@ -203,9 +203,9 @@
   .crumb {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    margin-bottom: 2px;
+    gap: var(--space-2);
+    padding: var(--space-1-5) var(--space-2);
+    margin-bottom: var(--space-0-5);
     background: var(--surface-ambient);
     border: 1px solid var(--border-ambient);
     border-radius: var(--radius-sm);
@@ -226,7 +226,7 @@
      A single directional drop leaves the up-side of a glyph unprotected against a bright sky;
      the four-way ring closes it. See --legible-text in theme/tokens.css. */
   .group-label {
-    margin: 6px 0 2px 2px;
+    margin: var(--space-1-5) 0 var(--space-0-5) var(--space-0-5);
     font-size: var(--text-meta);
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
