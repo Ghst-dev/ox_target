@@ -264,7 +264,8 @@
     gap: var(--space-1-5);
     width: 220px;
     padding: var(--space-4);
-    background: var(--surface-panel);
+    background: var(--glass-panel);
+    text-shadow: var(--ink-scrim);
     border-right: 1px solid var(--color-border);
     pointer-events: auto;
     z-index: 100;

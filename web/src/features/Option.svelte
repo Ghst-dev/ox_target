@@ -106,9 +106,26 @@
     width: 100%;
     padding: var(--space-1-5) var(--space-3) var(--space-1-5) var(--space-2);
     /* Ambient tier. The row is the only surface between the text and the game -- OptionList
-       dropped the panel it used to sit on -- so it carries the separation itself, and it is
-       doing that over live gameplay rather than a dimmed scene. */
+       dropped the panel it used to sit on, and `.panel` is deliberately a layout box rather
+       than a plane, so the gaps between the rows and the group labels are bare game. */
     background: var(--surface-ambient);
+    /*
+     * AND NO BLUR IS AVAILABLE HERE, which is worth saying on this page rather than leaving as
+     * an absence: it is up whenever the player is looking at anything, over live gameplay
+     * rather than a dimmed scene.
+     *
+     * `backdrop-filter` does nothing over the game. CEF paints the page and the engine
+     * composites that result over the rendered frame, so within the browser layer there is
+     * nothing behind a row to blur. The blur a translucent surface is designed to sit on comes
+     * from the game -- `TriggerScreenblurFadeIn` -- and it is full-screen: right for a shop the
+     * player has stopped to read, absurd for a target row. `theme/tokens.css` has the long
+     * version.
+     *
+     * So a row is translucent-and-sharp over moving geometry, permanently, and the whole of its
+     * legibility is the ambient plane at 0.70 with `--ink-scrim` behind the ink. That is what
+     * `contrast.py` verifies and why `glass.py` will not let this surface omit the shadow.
+     */
+    text-shadow: var(--ink-scrim);
     border: 1px solid var(--border-ambient);
     border-left: 2px solid transparent;
     border-radius: var(--radius-sm);

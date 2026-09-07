@@ -3,7 +3,7 @@
  * (RG/Ghostbase/src/lib/styles/tokens.css) so the server UI and the site read as
  * the same brand.
  *
- * Carried over: the near-black neutrals, the two-tier cyan accent, the 6/8/12 radii,
+ * Carried over: the near-black neutrals, the two-tier cyan accent,
  * the 4px spacing scale, the motion durations and easings, and the neutral (never
  * accent-tinted) resting shadows.
  *
@@ -122,6 +122,20 @@
      guarantee Inter, drop Inter.woff2 in web/public/fonts/ and @font-face it in
      base.css — see README. */
   --font-sans: 'Inter', 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* THE DISPLAY FACE. Headings, numerals and the uppercase labels -- never running text, which
+     stays on `--font-sans` because a technical face is what makes a number look measured and
+     what makes a paragraph look tiring.
+
+     Archivo, because the trait being matched is a wide low-contrast grotesque with flat
+     terminals (the Eurostile lineage) and Archivo is a Latin-native grotesque with a real width
+     axis. Saira is the named second choice and only fires if a machine already has it: the
+     woff2 shipped in `theme/fonts/` is Archivo alone, and one 90KB face per resource is already
+     the whole font budget.
+
+     Width is set per use with `font-variation-settings: 'wdth' <n>`, not here -- the axis runs
+     62..125 and a label wants a different width from a heading. */
+  --font-display: 'Archivo', 'Saira', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', SFMono-Regular, Menlo, Consolas, monospace;
 
   --font-weight-regular: 400;
@@ -212,10 +226,10 @@
 
   /* ---- Surfaces / neutrals ---------------------------------------------
      Same near-black system as the site. */
-  --color-bg: #0a0a0a;
-  --color-surface: #111111;
-  --color-surface-2: #1e1e1e;
-  --color-border: #2a2a2a;
+  --color-bg: #080b0e;
+  --color-surface: #0f1418;
+  --color-surface-2: #1b2229;
+  --color-border: #27313a;
 
   --color-white: #ffffff;
   /*
@@ -226,8 +240,18 @@
    * its worst; two of the three greys failed WCAG's 4.5:1 for body text and are lifted to the
    * smallest value that passes, hue and saturation untouched.
    *
-   *   --color-gray  #a1a1a1 -> #a2a2a2   4.50 -> 4.55 on a selected row over daylight
-   *   --color-dim   #6b6b6b -> #8b8b8b   2.91 -> 4.55 on a panel over daylight
+   *   --color-gray  #a1a1a1 -> #a2a2a2 -> #a4a4a4   4.50 -> 4.55 -> 4.41 -> 4.52
+   *   --color-dim   #6b6b6b -> #8b8b8b -> #8d8d8d   2.91 -> 4.55 -> 4.43 -> 4.55
+   *
+   * The third value in each row is the retone of 2026-09-03 and the fourth is the correction it
+   * forced. Both greys had been derived to the SMALLEST value that passes, so they were sitting
+   * on 4.5 with nothing to spare, and putting a hue in the neutral planes -- which raised their
+   * composited luminance by a couple of counts -- dropped both below it on the spot. Neither
+   * colour was touched by that pass; the ground under them moved.
+   *
+   * Worth reading as a property of the whole palette rather than an incident: every ink here is
+   * derived to the margin, so ANY change to a surface re-opens every contrast pair, and
+   * `contrast.py --derive` is the tool that answers it. Do not hand-pick a replacement.
    *
    * Grey is a rounding tie and the change is invisible; dim is not, and it is the one that
    * mattered. #6b6b6b never reached 4.5 on any plane in the theme -- its best case, a
@@ -244,12 +268,27 @@
    * The cost is that dim is now a good deal brighter, and it is used for structure as well as
    * for type -- a divider or a gauge track in dim will read stronger than it did.
    */
-  --color-gray: #a2a2a2;
-  --color-dim: #8b8b8b;
+  --color-gray: #a4a4a4;
+  --color-dim: #8d8d8d;
 
-  /* ---- Accent — two-tier cyan ------------------------------------------ */
+  /* ---- Accent — cyan at rest, lime when live ---------------------------
+     `--color-live` is the third accent and the newest, promoted out of the boot artwork where
+     `--color-brand-lime` had been sitting unused by anything but the gradient mesh. The duty
+     split is the reference's and it is the thing that makes its screens scannable: one cool
+     accent for what is on screen, one hot one for what is happening now -- a timer running, an
+     event open, a value that just moved.
+
+     Two names for one hex is deliberate. `--color-brand-lime` is the artwork's name and
+     `Tools/derive/mesh.py` resolves it against a reference PNG; `--color-live` is the role, and
+     a role is free to be repointed at a different hex without breaking that check.
+
+     `--color-action` now overlaps `--color-live` and one of them is going to go. It is still
+     here because folding it is an edit at every call site, not a token change, and this pass was
+     deliberately kept to the token file. */
   --color-primary: #22d3ee;
   --color-action: #00e5ff;
+  --color-brand-lime: #ccff00;
+  --color-live: var(--color-brand-lime);
 
   /* ---- Semantic feedback ------------------------------------------------
      danger/warn are the site's. success is new: the site never needed one, and a
@@ -273,12 +312,22 @@
      its parent's radius or picked a number, and on a wide card both are visible.
 
      The rest of M3's ten-step shape scale is not adopted. It runs 0/4/8/12/16/20/28/32/48/full
-     and the top half of that is phone shapes; 6/8/12 is the site's, and the server reads as the
-     site. What was missing was one step at the bottom, not a different family. */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+     and the top half of that is phone shapes. What was missing was one step at the bottom, not a
+     different family.
+
+     THE LADDER USED TO BE 4/6/8/12 AND IS NOW 1/2/3/4 -- see txData/ghst_sv/docs/ui-tdu.md. The
+     reference this UI is moving toward draws panels and rows square, and rounds only controls,
+     which is why `--radius-full` is untouched: a fully rounded pill next to a square slab is the
+     look, and a 6px slab next to a 9999px pill was never a deliberate pair.
+
+     One step, not zero. A hairline radius still antialiases a corner where 0 leaves it to the
+     pixel grid, and on a translucent panel over a moving world that edge crawls. The concentric
+     rule the xs step exists for survives the change: 4 outer minus a gutter still asks for
+     something smaller, it is now 1 rather than 4. */
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
   --radius-full: 9999px;
 
   /* ---- Depth ------------------------------------------------------------
@@ -289,9 +338,57 @@
   --shadow-panel: 0 12px 40px rgba(0, 0, 0, 0.55);
   --shadow-raised: 0 8px 32px rgba(0, 0, 0, 0.3);
 
-  /* backdrop-blur-panel. Only meaningful for one in-page layer over another —
-     it cannot blur the game. See README and client/main.lua. */
-  --blur-panel: 12px;
+  /* ---- Blur ---------------------------------------------------------------------------
+     CSS `backdrop-filter` CANNOT BLUR THE GAME, and this is the most expensive thing in this
+     file to forget.
+
+     CEF paints the page and the ENGINE composites that result over the rendered frame. So what
+     sits behind a game-facing element *within the browser layer* is transparent, and blurring
+     transparency produces nothing. It is a property of how NUI renders, not a CEF version
+     problem: no client update changes it.
+
+     The blur a translucent panel is designed to sit on comes from the GAME, triggered from Lua
+     when a focused UI opens -- `TriggerScreenblurFadeIn` / `FadeOut`. `ghst_shops`,
+     `ghst_skills`, `ghst_music`, `ghst_emotes`, `ghst_banking`, `ghst_crypto` and `ox_lib`'s
+     dialogs all do this, and their surfaces are tuned for it. It is full-screen by nature, so
+     it is available to a panel the player has stopped to read and NOT to ambient chrome: a
+     notification cannot blur the world because it arrived.
+
+     These two tokens are therefore for the one case that does work -- an in-page layer over
+     in-page paint, where CEF really did draw what is behind. `ghst_phone`'s shade and app
+     switcher, over the phone's own wallpaper, are the tree's only such surfaces.
+
+     Written at length because it was got wrong at length: on 2026-09-03 thirty-nine
+     `backdrop-filter` declarations were added across twenty resources, verified against a dev
+     harness that paints its own backdrop -- which is exactly where the filter does work -- and
+     removed the same day. `Tools/checks/glass.py` now refuses one on a game-facing plane.
+
+     28px, and the value survives the correction: what sells glass is the destruction of detail
+     behind it rather than the amount of light let through, and 12px was timid for that job. */
+  --blur-panel: 28px;
+  --blur-sat: 125%;
+
+  /* THE INK CARRIES ITS OWN DARK, so the plane does not have to.
+     Both glass planes were sitting at the exact maximum opacity 4.5:1 permits over a white
+     frame -- one step more open and the ink failed -- which made "show more of the game"
+     impossible as a token edit. Text drawn on glass takes `--ink-scrim` behind it, and that is
+     what bought ambient 0.82 -> 0.70 and panel 0.92 -> 0.84.
+
+     `--ink-scrim-credit` is what `contrast.py` is allowed to count, and it is deliberately
+     below what the shadow nominally applies: a halo is densest at the glyph edge and thinnest
+     at its centre, and the centre is what a contrast ratio is about. Crediting the nominal
+     alpha would be the gate believing a number the pixels do not deliver.
+
+     A glass component that omits `--ink-scrim` on its text is outside what the gate verified.
+     That used to be an admission; `Tools/checks/glass.py` now closes it, and pairs every
+     background from a glass token with a `text-shadow` declaration. It shipped a day late --
+     the tokens opened, `contrast.py` went green, and for that day every ratio in the tree was
+     vouched for by a layer that existed only in the checker.
+
+     `text-shadow` inherits, which is why the same gate requires a dense surface to settle it
+     too: a halo over an opaque row is smudge on text that never needed it. */
+  --ink-scrim: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.75);
+  --ink-scrim-credit: 0.35;
 
   /* ---- Motion -----------------------------------------------------------
      The first two are the site's and they stay: everything written so far uses them, and
@@ -328,10 +425,58 @@
   /* Translucent surfaces. The opaque tokens above are the source of truth; these
      are the same colors at the alpha an overlay wants. Raise the alpha on
      anything holding dense text — a vehicle list over bright daylight needs it. */
-  --surface-panel: rgba(17, 17, 17, 0.92);
-  --surface-raised: rgba(30, 30, 30, 0.92);
-  --surface-sunken: rgba(10, 10, 10, 0.7);
-  --scrim: rgba(10, 10, 10, 0.6);
+  /* GLASS IS CLAIMED ONCE, AT THE BOUNDARY WITH THE GAME.
+     `--surface-panel` and `--surface-ambient` are the only planes with the world directly
+     behind them, so they are the only ones that are glass. `raised` and `sunken` are always
+     nested inside one of those -- there is no game behind a row, only the panel it sits in --
+     so they stay dense. Making them glass too would double-blur into mud and cost a
+     compositing layer per row, across eleven CEF instances.
+
+     A GLASS PLANE IS TWO ALPHAS, not one. The `-edge` token is the open end of a falloff whose
+     dense core is the token above it; the core is where text sits and is what every ratio in
+     `Tools/checks/contrast.py` is judged against, and the edge carries no ink and is therefore
+     free to show the world.
+
+     THE FOCUSED PLANE IS NOT GLASS, AND THAT WAS DECIDED IN THE GAME RATHER THAN ON A DESK.
+     `--surface-panel` shipped at 0.84 core / 0.42 edge on an argument about how much world a
+     panel could afford to show. Seen in the running game -- five panels, screenshotted -- it was
+     simply wrong: the ATM behind the skills panel was legible through it, the wall behind the
+     emote list was, and a panel you have stopped to READ competing with the scene it is drawn
+     over is not depth, it is noise. 0.97 / 0.90.
+
+     What that leaves the falloff doing is exactly what this file already says its real job is,
+     one paragraph down: SOFTENING AN EDGE, so a hard rectangle does not read as a web page
+     pasted over the world. It was never a transparency budget; now it is not mistaken for one.
+
+     The ambient tier below is untouched and stays glass. That is the whole point of there being
+     two tiers -- the game is HELD STILL behind a focused panel and MOVING behind an instrument,
+     and only one of those is a scene the player still needs to see. */
+  --surface-panel: rgba(15, 20, 24, 0.97);
+  --surface-panel-edge: rgba(15, 20, 24, 0.90);
+  --surface-raised: rgba(27, 34, 41, 0.92);
+  --surface-sunken: rgba(8, 11, 14, 0.7);
+  --scrim: rgba(8, 11, 14, 0.6);
+
+  /*
+   * THE SAME SCRIM FOR A PANEL THE GAME IS STILL MOVING BEHIND.
+   *
+   * `--scrim` above is right when the world has been HELD STILL -- `lib.screenBlur` is up, the
+   * scene is a blurred plate, and 0.6 costs nothing because there is nothing left to see. A panel
+   * that takes NUI focus WITHOUT blurring is a different situation: the world behind it is live,
+   * and the reason that panel is open is often something in it.
+   *
+   * `ghst_admin` is the measured case and it has one of each. Its command palette blurs
+   * (`client/main.lua:43`) and takes the full scrim; its build panel takes focus and never calls
+   * `screenBlur` (`client/build.lua:16`), and had written its own `rgba(10, 10, 10, 0.35)` by
+   * hand with the note *"lighter than the palette's scrim: this panel is read against the world
+   * behind it."* That reason survived checking, so the number became a token rather than being
+   * argued away -- but as a token, so the next panel in the same situation inherits the decision
+   * instead of picking another literal.
+   *
+   * The hue is this file's near-black rather than the neutral grey that literal used: a scrim
+   * tinted differently from every surface it sits under is a colour cast nobody chose.
+   */
+  --scrim-light: rgba(8, 11, 14, 0.35);
 
   /*
    * AMBIENT SURFACES — the second tier, for anything drawn over live gameplay.
@@ -357,9 +502,66 @@
    * focused. That is the same shape as the primary/action rule above — a question about
    * the moment, not about the component.
    */
-  --surface-ambient: rgba(9, 11, 13, 0.82);
+  --surface-ambient: rgba(8, 11, 14, 0.7);
+  --surface-ambient-edge: rgba(8, 11, 14, 0.3);
+
+  /* THE FALLOFF, AND WHAT IT IS ACTUALLY FOR.
+     `--glass-*` is the two-stop version of the plane above it: the core out to
+     `--glass-core-stop`, opening to the `-edge` value at the boundary. Reach for it instead of
+     the flat token when a surface is large enough to have area that carries no text.
+
+     It softens an edge. It is NOT a transparency budget, and an earlier version of this comment
+     implied otherwise on the strength of an assumed 55/45 core-to-edge area split that was
+     never measured against a real component. On these boxes the opened region is the outer
+     rim and the corners, which is a few percent of the area -- worth having, because a hard
+     rectangle over a moving world is the thing that reads as a web page, and worth nothing at
+     all as a way to show more of the game.
+
+     THE CONTRACT IS THAT THE CORE COVERS THE CONTENT. `contrast.py` judges the core, so a
+     surface whose text strays into the falloff is outside what was verified -- which is why
+     this is opt-in per component and not the default. Compact chrome, where text fills the box
+     edge to edge, keeps the flat token and is correct to. */
+  --glass-core-stop: 55%;
+  --glass-panel: radial-gradient(85% 85% at 50% 45%,
+                 var(--surface-panel) 0 var(--glass-core-stop), var(--surface-panel-edge) 100%);
+  --glass-ambient: radial-gradient(85% 85% at 50% 45%,
+                 var(--surface-ambient) 0 var(--glass-core-stop), var(--surface-ambient-edge) 100%);
   --border-ambient: rgba(255, 255, 255, 0.09);
   --shadow-ambient: 0 2px 10px rgba(0, 0, 0, 0.45);
+
+  /*
+   * THE HOUSE SCREEN-EDGE INSET -- 26px at 1920x1080, and the only number a UI should use to
+   * hold itself off the edge of the frame.
+   *
+   * It is not new. `ghst_hud` has called it "the house 26px inset" in `lib/layout.svelte.ts`
+   * since its clusters were placed, and every corner cluster there sits on it: `readout` and
+   * `vehicle` take x 0.0135 and y 0.0241, which are 25.9 and 26.0 device pixels on a 1080p
+   * frame. What was missing was anywhere to write it down, so eight other resources each
+   * guessed -- 12, 14, 18, 24 and 32 raw pixels, plus 3vw and 4vw, which is 58 and 77.
+   *
+   * WHY IT IS A VIEWPORT FRACTION AND NOT A PIXEL COUNT. The inset exists because the frame
+   * has an edge the player may not be able to see all of: GTA's own safezone slider, a TV that
+   * overscans, a monitor with a bezel that eats the last few rows. That is a proportion of the
+   * display, not a fixed distance -- 26px is a comfortable margin at 1080p and a hairline at
+   * 4K. Both terms come from the same 26px measurement so they agree on a 16:9 frame and part
+   * company where they should: `x` grows on an ultrawide because the frame got wider, `y` does
+   * not because it did not get taller.
+   *
+   * WHY NOT `--ui-px`. This is a measurement of the FRAME, not a size of type, so it must not
+   * answer the player's interface-size preference -- an inset that moved with `uiScale` would
+   * push the HUD off a screen it was fitting a moment earlier. `ghst_loadingscreen`'s progress
+   * bar cap makes the same distinction in the same words.
+   *
+   * A COMPOSITION MAY TAKE A MULTIPLE OF IT and some do -- a full-screen takeover wants more
+   * air than a HUD readout. Take `calc(var(--edge-x) * 2)` and say why; do not type a new
+   * number, because a new number is how the eight above happened.
+   *
+   * `ghst_hud` itself keeps its own placement system rather than these tokens: its clusters are
+   * player-movable and are additionally clamped to GTA's live safezone, which is a stronger
+   * guarantee than a constant. These are for everything that is not movable.
+   */
+  --edge-x: 1.354vw;
+  --edge-y: 2.407vh;
 
 
   /*
@@ -553,4 +755,91 @@
   --dur-base: 0.2s;
   --dur-slow: 0.3s;
   --dur-enter: 0.65s;
+
+  /* ---- The bar family --------------------------------------------------------------------
+     One hatch, and it is shared rather than owned. `ox_lib` draws it twice -- the progress
+     overlay's fill and `lib/Bar.svelte` -- and they had drifted the moment there were two of
+     them: 45px against 10px, with the geometry typed out twice.
+
+     It is in the template rather than in ox_lib because `lib/Bar.svelte` is a COPIED component:
+     a Svelte component cannot cross a NUI resource boundary, so a resource that draws a bar
+     carries the file, and a carried file needs its tokens wherever it lands.
+
+     Height is here too, and it is a correction. It was left out on the argument that an action
+     overlay is meant to be large and an inline stat bar is not -- which sounded like restraint
+     and was really a defence of the 45px. A hatch at that size reads as a block of texture
+     rather than as a value. A caller that genuinely needs a bigger bar overrides `--bar-height`
+     on its own element rather than moving the token: `ghst_garages`' room board does, because it
+     is read from a metre away. */
+  --hatch-angle: 115deg;
+  --hatch-step: calc(3 * var(--ui-px));
+  --hatch-gap: calc(7 * var(--ui-px));
+  --bar-height: calc(10 * var(--ui-px));
+
+
+  /* ---- Control heights -------------------------------------------------------------------
+     Two heights, because there are two kinds of control and not four.
+
+     `--control-h` is anything a player types into or picks from: a text input, a select, a date
+     field, a colour row. `--control-icon` is the square a single glyph sits in -- a row's leading
+     icon, its trailing chevron, a scroll arrow. Each was three separate literals in three files
+     before it was a token, which is one value maintained in no place.
+
+     What is deliberately NOT here: a progress overlay's height, a list row's, a header's. Those
+     are surfaces sized to their content, and a token joining them to a text input would mean the
+     next person changing an input silently resizes something across the screen.
+
+     Both on `--ui-px`, which is a fix rather than a conversion: the type inside these boxes
+     already scaled with the player's interface size while the box did not, so at 1.3 a 15px input
+     was drawn into a 34px slot with the descenders clipped. */
+  --control-h: calc(34 * var(--ui-px));
+  --control-icon: calc(25 * var(--ui-px));
+
+
+  /* ---- The key glyph's scale -------------------------------------------------------------
+     `lib/KeyGlyph.svelte` is a byte-identical copy in every resource that draws a key, so it
+     cannot be edited per surface -- and it had its geometry written into it, which meant it fit
+     exactly one surface: a menu at interface scale.
+
+     A world board is the case that broke it. `ghst_garages` reads at seven metres and has a 23px
+     legibility floor, so a 19px cap around 9px type is a key nobody can read, and the resource
+     had two hand-drawn ones instead. These four tokens are what let a surface size the shared
+     component instead of forking it -- the same bargain `--bar-height` strikes for `lib/Bar`. */
+  --key-h: calc(19 * var(--ui-px));
+  --key-min: calc(20 * var(--ui-px));
+  --key-min-wide: calc(30 * var(--ui-px));
+  --key-text: var(--text-micro);
+  --key-pad: calc(5 * var(--ui-px));
+
+
+  /* ---- The choice row --------------------------------------------------------------------
+     `lib/ChoiceRow.svelte`'s scale, and the reason it is a scale rather than three numbers in a
+     component: the same row has to work on a menu at interface size and on a world board read
+     from seven metres, where `ghst_garages` raises `--row-text` past its 23px legibility floor.
+
+     A component that hard-codes its own geometry fits exactly one surface, which is how this
+     tree ended up with two hand-drawn key glyphs and two hand-written filter rows. */
+  --row-text: var(--text-sm);
+  --row-pad-y: var(--space-2);
+  --row-pad-x: var(--space-3);
+
+
+  /* ---- The stat table --------------------------------------------------------------------
+     `lib/StatTable.svelte`'s scale. A menu shows facts at reading distance; a world board shows
+     the same facts across a room, so the two sizes and the padding are the surface's to set. */
+  --stat-label: var(--text-label);
+  --stat-value: var(--text-base);
+  --stat-pad-y: var(--space-2);
+  --stat-pad-x: var(--space-3);
+
+
+  /* ---- The button ------------------------------------------------------------------------
+     `lib/Button.svelte`'s scale. A world board's controls are pressed with a camera raycast from
+     across a room and want a heavy border and a large face; a dialog's are clicked with a mouse
+     and want neither. Same component, four numbers. */
+  --btn-pad-y: var(--space-2);
+  --btn-pad-x: var(--space-4);
+  --btn-text: var(--text-sm);
+  --btn-border: 1px;
+
 }

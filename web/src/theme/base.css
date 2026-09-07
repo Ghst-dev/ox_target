@@ -61,10 +61,24 @@
     color: var(--color-dim);
   }
 
-  /* CEF is Chromium, so these pseudo-elements are reliable here in a way they are
-     not on the open web. */
+  /*
+   * CEF is Chromium, so these pseudo-elements are reliable here in a way they are not on the open
+   * web. `scrollbar-color` is not an option: it landed in Chromium 121 and the ceiling here is
+   * about 108.
+   *
+   * **Narrow, and dimmer than the surface it sits on.** This was a 10px bar carrying a thumb in
+   * `--color-surface-2` — a full-height rail down the edge of every panel, and against a tall
+   * wardrobe the thumb is a short bright mark on a long empty track, which draws the eye to the
+   * one part of a shop nobody is shopping in. 8px with a 4px thumb reads as a position indicator
+   * rather than as a control, which is what it is: this is a mouse-wheel surface, and nobody drags
+   * a 4px thumb.
+   *
+   * The thumb only reaches full contrast on hover, so it is legible when you go looking for it and
+   * quiet when you are not.
+   */
   ::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
@@ -72,15 +86,21 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--color-surface-2);
     border: 2px solid transparent;
-    background-clip: content-box;
     border-radius: var(--radius-full);
+    background: var(--color-border);
+    background-clip: content-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-border);
+    background: var(--color-gray);
     background-clip: content-box;
+  }
+
+  /* Where two scrollers meet. Left as the default it is an opaque light square in the corner of
+     an otherwise dark panel. */
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 
   /* Motion sickness is a real accessibility concern in a first-person game, and
@@ -139,4 +159,41 @@
     --space-8: calc(32 * var(--ui-px) + var(--density-step));
     --space-10: calc(40 * var(--ui-px) + var(--density-step));
   }
+}
+
+/*
+ * ARCHIVO, the display face -- headings, numerals, uppercase labels. Never running text.
+ *
+ * Self-hosted rather than pulled from Google Fonts, and that is the same reasoning
+ * `tokens.css` gives for Inter: CEF cannot be assumed to have network access, and a webfont
+ * that fails to load swaps mid-session. 90KB per resource is the entire font budget, which is
+ * why only Archivo ships -- `--font-display` names Saira after it as the second choice, and
+ * that only fires on a machine that already has it.
+ *
+ * One file, both axes. This is the variable build: weight 400..800 and width 62..125, set per
+ * use with `font-variation-settings`. `font-display: block` and not `swap`, because a swap on
+ * an overlay is a visible reflow over live gameplay rather than a paragraph settling.
+ */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 400 800;
+  font-stretch: 62% 125%;
+  font-display: block;
+  src: url('./fonts/Archivo-latin.woff2') format('woff2-variations');
+}
+
+/*
+ * The display face, applied where it is unambiguously right. Headings are the one target that
+ * is safe to claim in a base layer: a component that has already decided its own face wins on
+ * specificity, and nothing here is running text.
+ *
+ * Numerals and the uppercase labels are the other two duties and are deliberately NOT swept
+ * from here -- `.5rem` of tracked-out caps is a component's decision about hierarchy, and a
+ * blanket selector would catch the ones that are body text wearing a small size. Those get
+ * `var(--font-display)` at the call site as each UI is worked through.
+ */
+:where(h1, h2, h3, h4) {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 118;
 }

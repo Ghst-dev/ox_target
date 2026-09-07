@@ -207,30 +207,61 @@
     padding: var(--space-1-5) var(--space-2);
     margin-bottom: var(--space-0-5);
     background: var(--surface-ambient);
+    /* Same plane as an option row, and over the same live game -- `Option.svelte` carries what
+       that costs the ink and why the shadow is not optional. */
+    text-shadow: var(--ink-scrim);
     border: 1px solid var(--border-ambient);
+    /* Reserved at rest, exactly as an option row reserves it — the two are the same slab and a
+       breadcrumb whose contents shifted 2px on hover while the rows below it did not would give
+       that away. */
+    border-left: 2px solid transparent;
     border-radius: var(--radius-sm);
     color: var(--color-gray);
     font-size: var(--text-sm);
     text-align: left;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
   }
+
+  /* The same hover an option row takes, for the same reason it takes it: neutral lift, accent on
+     the edges, and the left rule as the strongest signal of what is live. This was the accent on
+     all four edges and on the label, with no lift and no transition — a second answer to hover
+     sitting directly above eight rows holding the first one. */
   .crumb:hover {
+    background-image: var(--layer-hover);
     border-color: var(--primary-glow-border);
-    color: var(--color-primary);
+    border-left-color: var(--color-primary);
+    color: var(--color-white);
   }
 
   .crumb-label {
     font-weight: 500;
   }
 
-  /* Sits directly on the game, with no surface of its own, so it takes the shared outline.
-     A single directional drop leaves the up-side of a glyph unprotected against a bright sky;
-     the four-way ring closes it. See --legible-text in theme/tokens.css. */
+  /*
+   * Sits directly on the game, with no surface of its own, so it takes the shared outline.
+   * A single directional drop leaves the up-side of a glyph unprotected against a bright sky;
+   * the four-way ring closes it. See --legible-text in theme/tokens.css.
+   *
+   * AN EYEBROW, AND WHITE. Two changes, both from the same fact -- there is no plane under this
+   * word. It was `--color-gray` at the display face's default width and regular weight, which is
+   * the eyebrow's tracking and capitals without the two things that actually make it read as a
+   * label; and grey type over a world that is half the time brighter than `--color-gray` is a
+   * smudge no matter how good the outline is. White plus the ring is the whole of what carries
+   * ink with nothing behind it, and the rows below it keep their own dimmer tier because they
+   * have `--surface-ambient` to sit on.
+   */
   .group-label {
     margin: var(--space-1-5) 0 var(--space-0-5) var(--space-0-5);
     font-size: var(--text-meta);
+    font-weight: var(--font-weight-bold);
     letter-spacing: var(--tracking-label);
+    font-family: var(--font-display);
+    font-variation-settings: 'wdth' 112;
     text-transform: uppercase;
-    color: var(--color-gray);
+    color: var(--color-white);
     text-shadow: var(--legible-text);
   }
   .group-label:first-child {
