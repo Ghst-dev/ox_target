@@ -45,8 +45,33 @@
 
   /* Same ring as the site. Keyboard focus only: a mouse click on a button in-game
      should not leave a ring sitting there, but tab navigation has to stay
-     visible. */
-  :focus-visible {
+     visible.
+
+     **`:not([tabindex='-1'])` is that same sentence, finished.** A negative tabindex
+     takes an element out of tab navigation and leaves it focusable by script -- and
+     by CLICK, which is the part that surprises. Click any dead space inside a
+     `role="dialog"` container and the browser walks up to the nearest focusable
+     ancestor and focuses the container. Nothing was tabbed to; but the next keypress
+     -- alt-tabbing back into the game is enough -- puts Chromium into keyboard
+     modality, and it paints this on whatever is focused. `ox_inventory`'s attachments
+     screen is a full-viewport container with one, so the ring arrived as a cyan
+     outline round the entire screen, seconds after a drag, from nowhere.
+
+     It is not one screen's problem. Every modal container in the tree carries a
+     negative tabindex, because `role="dialog"` demands one to satisfy
+     `a11y_interactive_supports_focus`. And it costs nothing to suppress: Tab cannot
+     reach these elements, so the ring here never marked a place the keyboard could
+     get to. A component that *does* focus a `tabindex='-1'` element deliberately --
+     a roving-tabindex list stepping through its own options -- owns its own
+     indicator and has to draw it. Nothing in the tree does that today; the two
+     elements that look like it (`ghst_admin`'s `PlayerRow`, `ghst_appearance`'s
+     `SwatchGrid`) never call `focus()` on themselves.
+
+     Written here in ox_lib so it may be copied into the GPL resources as well as
+     into the LGPL fork, which is the direction a shared line has to travel -- see
+     `Row.svelte`'s header. `ghst_phone` keeps its own version of this rule, gated on
+     `data-kbd`, and its comment says why. */
+  :focus-visible:not([tabindex='-1']) {
     outline: 2px solid var(--color-primary);
     outline-offset: 3px;
     border-radius: var(--radius-sm);
